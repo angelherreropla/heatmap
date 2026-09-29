@@ -85,6 +85,47 @@ main{ position:relative; flex:1; min-width:0; }
 .legend-chip{ display:inline-flex; align-items:center; gap:6px; background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:4px 11px; font-size:12.5px; cursor:pointer; color:var(--text); }
 .legend-chip .sw{ width:12px; height:12px; border-radius:3px; display:inline-block; }
 .legend-chip.off{ opacity:.45; text-decoration:line-through; }
+.records-modal{ width:min(1080px, 94vw); max-height:90vh; overflow-y:auto; }
+.records-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:10px; margin-bottom:6px; }
+.record-card{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 12px; cursor:pointer; }
+.record-card:hover{ border-color:var(--accent-2); }
+.record-card .label{ font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.03em; }
+.record-card .value{ font-size:18px; font-weight:700; color:var(--accent); margin:2px 0; }
+.record-card .name{ font-size:12.5px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.top10-head{ display:flex; justify-content:space-between; align-items:center; }
+.top10-head select{ background:var(--panel); border:1px solid var(--line); color:var(--text); border-radius:6px; padding:5px 8px; font:inherit; font-size:13px; margin-left:6px; }
+.top10-wrap{ overflow-x:auto; }
+.top10-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+.top10-table th, .top10-table td{ padding:6px 8px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
+.top10-table td.num, .top10-table th.num{ text-align:right; }
+.top10-table tbody tr{ cursor:pointer; }
+.top10-table tbody tr:hover{ background:var(--panel-2); }
+.cal-modal{ width:min(1080px, 94vw); max-height:90vh; overflow-y:auto; }
+.cal-wrap{ overflow-x:auto; padding-bottom:4px; }
+.cal-months{ display:grid; grid-auto-flow:column; grid-auto-columns:12px; gap:3px; margin-left:26px; margin-bottom:2px; white-space:nowrap; overflow:visible; }
+.cal-months span{ font-size:11px; color:var(--text-dim); }
+.cal-body{ display:flex; gap:6px; }
+.cal-weekdays{ display:grid; grid-template-rows:repeat(7, 12px); gap:3px; width:20px; flex:0 0 auto; }
+.cal-weekdays span{ font-size:10px; color:var(--text-dim); line-height:12px; height:12px; }
+.cal-grid{ display:grid; grid-auto-flow:column; grid-auto-columns:12px; grid-template-rows:repeat(7, 12px); gap:3px; }
+.cal-day{ width:12px; height:12px; border-radius:3px; background:var(--panel-2); border:1px solid var(--line); }
+.cal-day.lv0{ background:var(--panel-2); }
+.cal-day.lv1{ background:#0d4f2e; border-color:#0d4f2e; }
+.cal-day.lv2{ background:#177a3f; border-color:#177a3f; }
+.cal-day.lv3{ background:#22a852; border-color:#22a852; }
+.cal-day.lv4{ background:#39ff6a; border-color:#39ff6a; }
+.cal-legend{ display:flex; align-items:center; gap:5px; margin-top:12px; font-size:11px; color:var(--text-dim); }
+.repeats-modal{ width:min(900px, 94vw); max-height:90vh; overflow-y:auto; }
+.repeat-group{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-bottom:10px; }
+.repeat-group-head{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; cursor:pointer; }
+.repeat-group-head h4{ margin:0; font-size:14px; }
+.repeat-group-head span{ font-size:12px; color:var(--text-dim); white-space:nowrap; }
+.repeat-table{ width:100%; border-collapse:collapse; font-size:12.5px; margin-top:8px; }
+.repeat-table th, .repeat-table td{ padding:5px 7px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
+.repeat-table th.num, .repeat-table td.num{ text-align:right; }
+.repeat-table tbody tr{ cursor:pointer; }
+.repeat-table tbody tr:hover{ background:var(--panel-2); }
+.repeat-table tr.best td{ color:var(--accent); font-weight:600; }
 </style>
 </head>
 <body>
@@ -96,6 +137,9 @@ main{ position:relative; flex:1; min-width:0; }
     <span class="count" id="headerStats"></span>
     <div class="spacer"></div>
     <button class="ghost" id="btnStats">Gráficos</button>
+    <button class="ghost" id="btnRecords">Récords</button>
+    <button class="ghost" id="btnCalendar">Calendario</button>
+    <button class="ghost hidden" id="btnRepeats">Rutas repetidas</button>
     <button class="ghost" id="btnHelp">Ayuda</button>
     <button class="primary" id="btnAdd">Añadir GPX</button>
     <input type="file" id="gpxInput" accept=".gpx" multiple class="hidden">
@@ -148,6 +192,60 @@ main{ position:relative; flex:1; min-width:0; }
       <span id="loadingText">Cargando, espere por favor…</span>
     </div>
   </div>
+  <div class="modal-overlay hidden" id="repeatsModal">
+    <div class="modal repeats-modal">
+      <div class="stats-head">
+        <h3 style="margin:0;">Rutas repetidas</h3>
+        <div class="stats-controls">
+          <button class="ghost" id="repeatsRecalc">Recalcular</button>
+          <button class="ghost" id="repeatsClose">✕</button>
+        </div>
+      </div>
+      <p id="repeatsInfo" class="stats-info"></p>
+      <div id="repeatsList"></div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="calModal">
+    <div class="modal cal-modal">
+      <div class="stats-head">
+        <h3 style="margin:0;">Calendario de actividad</h3>
+        <div class="stats-controls">
+          <label>Año <select id="calYear"></select></label>
+          <button class="ghost" id="calClose">✕</button>
+        </div>
+      </div>
+      <p id="calInfo" class="stats-info"></p>
+      <div class="cal-wrap"><div id="calGrid"></div></div>
+      <div class="cal-legend">
+        <span>Menos</span>
+        <span class="cal-day lv0"></span><span class="cal-day lv1"></span><span class="cal-day lv2"></span><span class="cal-day lv3"></span><span class="cal-day lv4"></span>
+        <span>Más</span>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="recordsModal">
+    <div class="modal records-modal">
+      <div class="stats-head">
+        <h3 style="margin:0;">Récords y Top 10</h3>
+        <button class="ghost" id="recordsClose">✕</button>
+      </div>
+      <p id="recordsInfo" class="stats-info"></p>
+      <div class="records-grid" id="recordsGrid"></div>
+      <div class="top10-head">
+        <h4 style="margin:14px 0 8px;">Top 10</h4>
+        <label>Ordenar por
+          <select id="top10Metric">
+            <option value="km">Distancia</option>
+            <option value="gain">Desnivel</option>
+            <option value="idx">Índice de dificultad</option>
+            <option value="speed">Velocidad media</option>
+            <option value="duration">Tiempo en movimiento</option>
+          </select>
+        </label>
+      </div>
+      <div class="top10-wrap"><table class="top10-table" id="top10Table"><thead></thead><tbody></tbody></table></div>
+    </div>
+  </div>
   <div class="modal-overlay hidden" id="statsModal">
     <div class="modal stats-modal">
       <div class="stats-head">
@@ -189,6 +287,10 @@ main{ position:relative; flex:1; min-width:0; }
         <p><strong>Perfil de elevación.</strong> Al seleccionar una ruta aparece abajo su perfil de altitud. Pasando el ratón por el perfil, se marca ese punto exacto en el mapa. Con la "✕" se cierra.</p>
         <p><strong>Mapa y capas.</strong> El icono de capas de la esquina superior derecha permite cambiar entre OpenStreetMap, topográfico, ciclista y satélite (se recuerda tu última elección), y activar o desactivar las capas "Rutas" y "Densidad (heatmap)". La densidad muestra en degradado, de azul a rojo, las zonas por las que pasas más veces, respetando los filtros activos.</p>
         <p><strong>Gráficos.</strong> El botón "Gráficos" abre un panel con la evolución por mes o por año (a elegir) de los kilómetros, el desnivel, las horas en movimiento y la velocidad media, esta última con una línea por tipo de actividad. Usa las rutas que cumplen los filtros en ese momento. Las barras se reparten por colores según el tipo de ruta, y pulsando un tipo en la leyenda se oculta o se muestra a la vez en los cuatro gráficos. Para ver otro subconjunto de rutas, cierra el panel, cambia los filtros y vuelve a abrirlo.</p>
+        <p><strong>Récords y Top 10.</strong> El botón "Récords" muestra, para las rutas que cumplen los filtros, la mejor ruta en seis apartados (más larga, mayor desnivel, más tiempo en movimiento, más rápida, más difícil y más empinada) y una tabla Top 10 que puedes ordenar por distancia, desnivel, tiempo, velocidad media, índice de dificultad o desnivel por km. Al pulsar una tarjeta o una fila se cierra el panel y el mapa se centra en esa ruta, la resalta y abre su popup. La velocidad media y el desnivel por km solo tienen en cuenta rutas de 5 km o más, para que un tramo corto no distorsione el ranking.</p>
+        <p><strong>Récords y Top 10.</strong> El botón "Récords" muestra la ruta más larga, con más desnivel, más rápida de media, con más tiempo en movimiento y más difícil (según el índice), y una tabla Top 10 que puedes ordenar por distancia, desnivel, índice, velocidad media o tiempo en movimiento. Pinchar una tarjeta o una fila cierra la ventana y lleva esa ruta al mapa, con su popup abierto. Todo se calcula sobre las rutas que cumplen los filtros activos.</p>
+        <p><strong>Calendario de actividad.</strong> El botón "Calendario" muestra un cuadradito por día del año elegido, más oscuro o más claro según los km de ese día respecto al día con más km de ese año (al pasar el ratón por un día ves su fecha, km, desnivel y número de rutas). Se calcula sobre las rutas que cumplen los filtros activos.</p>
+        <p><strong>Rutas repetidas.</strong> El botón "Rutas repetidas" agrupa las que comparten el mismo recorrido (comparando la forma del trazado, no el nombre ni la fecha), y dentro de cada grupo muestra un mini-ranking para ver tu evolución; la fila con mejor velocidad media se resalta. Pinchar una fila te lleva a esa ruta en el mapa. El cálculo se guarda en memoria y solo se rehace si añades o quitas rutas; el botón "Recalcular" lo fuerza a mano. Solo se muestran los grupos que aún tienen 2 o más rutas dentro de los filtros activos. Con muchas rutas puede tardar unos segundos la primera vez.</p>
         <p><strong>Cómo se calculan los datos.</strong></p>
         <ul style="margin:0 0 10px; padding-left:18px;">
           <li><em>Desnivel:</em> suma de las subidas de más de 2 m respecto al último punto confirmado, tras corregir puntos de altitud aberrantes.</li>
@@ -276,6 +378,40 @@ main{ position:relative; flex:1; min-width:0; }
     return out;
   }
 
+  // Detecta tramos de varios puntos seguidos con altitud imposible (pérdida de GPS/barómetro)
+  // por su velocidad vertical, y los interpola en línea recta entre el punto bueno anterior y el siguiente.
+  function limpiarTramosPorVelocidad(pts, maxRate = 2){
+    const n = pts.length;
+    const eles = pts.map(p => p.ele);
+    const bad = new Array(n).fill(false);
+    for(let i=1;i<n;i++){
+      if(eles[i] == null || eles[i-1] == null) continue;
+      let dt = 1;
+      if(pts[i].time && pts[i-1].time){
+        const d0 = new Date(pts[i-1].time), d1 = new Date(pts[i].time);
+        if(!isNaN(d0) && !isNaN(d1)) dt = Math.max(1, (d1-d0)/1000);
+      }
+      if(Math.abs((eles[i]-eles[i-1])/dt) > maxRate){ bad[i-1] = true; bad[i] = true; }
+    }
+    const out = eles.slice();
+    let i = 0;
+    while(i < n){
+      if(!bad[i]){ i++; continue; }
+      let j = i;
+      while(j < n && bad[j]) j++;
+      const a = i-1, b = j;
+      if(a >= 0 && b < n && eles[a] != null && eles[b] != null){
+        for(let k=i;k<j;k++) out[k] = eles[a] + (eles[b]-eles[a]) * ((k-a)/(b-a));
+      } else if(a < 0 && b < n){
+        for(let k=i;k<j;k++) out[k] = eles[b];
+      } else if(b >= n && a >= 0){
+        for(let k=i;k<j;k++) out[k] = eles[a];
+      }
+      i = j;
+    }
+    return out;
+  }
+
   // Detecta y corrige puntos de altitud aberrantes (picos/pozos aislados por fallos de GPS/barómetro).
   function hampelFilter(series, window = 7, nSigma = 3, minDelta = 5){
     const half = Math.floor(window/2);
@@ -321,7 +457,7 @@ main{ position:relative; flex:1; min-width:0; }
       if(pts.length < 2) return null;
 
       let km = 0;
-      const eleLimpia = hampelFilter(pts.map(p=>p.ele));
+      const eleLimpia = hampelFilter(limpiarTramosPorVelocidad(pts));
       const profileRaw = [{ km:0, ele:eleLimpia[0], lat:pts[0].lat, lon:pts[0].lon }];
       for(let i=1;i<pts.length;i++){
         km += haversine([pts[i-1].lat,pts[i-1].lon],[pts[i].lat,pts[i].lon]) / 1000;
@@ -345,17 +481,20 @@ main{ position:relative; flex:1; min-width:0; }
 
       const stem = file.name.replace(/\.gpx$/i, "");
       const m = stem.match(/^(\d{4})_(\d{2})_(\d{2})_(.+)$/);
-      let year = null, date = null, name = stem;
-      if(m){
+      const name = m ? m[4] : stem;
+
+      let year = null, date = null;
+      const tRef = pts.find(p => p.time);
+      if(tRef){
+        const d = new Date(tRef.time);
+        if(!isNaN(d)){
+          date = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+          year = d.getFullYear();
+        }
+      }
+      if(!date && m){
         date = `${m[1]}-${m[2]}-${m[3]}`;
         year = parseInt(m[1],10);
-        name = m[4];
-      } else {
-        const timeEl = doc.getElementsByTagName("time")[0];
-        if(timeEl){
-          const d = new Date(timeEl.textContent);
-          if(!isNaN(d)){ date = d.toISOString().slice(0,10); year = d.getFullYear(); }
-        }
       }
 
       const trk = doc.getElementsByTagName("trk")[0];
@@ -541,6 +680,7 @@ main{ position:relative; flex:1; min-width:0; }
       const color = typeColors.get(t.type || "Desconocido") || "#ff5a1f";
       const baseStyle = { color, weight:3.5, opacity };
       const line = L.polyline(t.pts, { ...baseStyle, renderer:sharedRenderer }).addTo(routeLayer);
+      line._id = t.id;
       line._baseStyle = baseStyle;
       line.bindPopup(popupHtml(t));
       line.on("click", () => {
@@ -1054,6 +1194,367 @@ main{ position:relative; flex:1; min-width:0; }
   els("statsGroup").addEventListener("change", renderStats);
   els("statsModal").addEventListener("click", e => { if(e.target === els("statsModal")) closeStats(); });
   document.addEventListener("keydown", e => { if(e.key === "Escape") closeStats(); });
+
+  // ---------- récords y top 10 ----------
+  function focusTrack(id){
+    let found = null;
+    routeLayer.eachLayer(l => { if(l._id === id) found = l; });
+    closeRecords();
+    if(found){ map.fitBounds(found.getBounds(), { padding:[40,40], maxZoom:15 }); setTimeout(() => found.fire("click"), 260); }
+  }
+
+  function recordCard(label, value, t){
+    const card = document.createElement("div");
+    card.className = "record-card";
+    card.innerHTML = `<div class="label">${label}</div><div class="value">${value}</div><div class="name">${t.name}${t.date ? " · "+t.date : ""}</div>`;
+    card.addEventListener("click", () => focusTrack(t.id));
+    return card;
+  }
+
+  function metricValue(t, metric){
+    if(metric === "km") return t.km;
+    if(metric === "gain") return t.gain;
+    if(metric === "idx") return difficultyIndex(t);
+    if(metric === "speed") return t.duration ? t.km/(t.duration/3600) : null;
+    if(metric === "duration") return t.duration || null;
+    return null;
+  }
+  function formatDuration(sec){
+    return `${Math.floor(sec/3600)}h ${String(Math.round((sec%3600)/60)).padStart(2,"0")}m`;
+  }
+
+  function renderRecords(){
+    const list = filteredTracks();
+    const grid = els("recordsGrid"), info = els("recordsInfo");
+    grid.innerHTML = "";
+    if(!list.length){
+      info.textContent = "No hay rutas con los filtros actuales.";
+      els("top10Table").querySelector("thead").innerHTML = "";
+      els("top10Table").querySelector("tbody").innerHTML = "";
+      return;
+    }
+    info.textContent = `Basado en las ${list.length} rutas que cumplen los filtros actuales.`;
+
+    const maxBy = (arr, fn) => arr.reduce((a,b) => fn(b) > fn(a) ? b : a);
+    const masLarga = maxBy(list, t => t.km);
+    grid.appendChild(recordCard("Más larga", masLarga.km + " km", masLarga));
+    const masDesnivel = maxBy(list, t => t.gain);
+    grid.appendChild(recordCard("Más desnivel", masDesnivel.gain + " m", masDesnivel));
+
+    const withSpeed = list.filter(t => t.duration);
+    if(withSpeed.length){
+      const masRapida = maxBy(withSpeed, t => t.km/(t.duration/3600));
+      grid.appendChild(recordCard("Más rápida (media)", (masRapida.km/(masRapida.duration/3600)).toFixed(1) + " km/h", masRapida));
+      const masTiempo = maxBy(withSpeed, t => t.duration);
+      grid.appendChild(recordCard("Más tiempo en movimiento", formatDuration(masTiempo.duration), masTiempo));
+    }
+    const withIdx = list.map(t => ({ t, idx: difficultyIndex(t) })).filter(x => x.idx != null);
+    if(withIdx.length){
+      const masDificil = withIdx.reduce((a,b) => b.idx > a.idx ? b : a);
+      grid.appendChild(recordCard("Más difícil (índice)", masDificil.idx, masDificil.t));
+    }
+    renderTop10();
+  }
+
+  function renderTop10(){
+    const metric = els("top10Metric").value;
+    const list = filteredTracks()
+      .map(t => ({ t, v: metricValue(t, metric) }))
+      .filter(x => x.v != null)
+      .sort((a,b) => b.v - a.v)
+      .slice(0, 10);
+    const table = els("top10Table");
+    table.querySelector("thead").innerHTML =
+      `<tr><th>#</th><th>Ruta</th><th>Fecha</th><th>Tipo</th><th class="num">Km</th><th class="num">Desnivel</th><th class="num">Índice</th><th class="num">Vel. media</th></tr>`;
+    const tbody = table.querySelector("tbody");
+    tbody.innerHTML = "";
+    if(!list.length){
+      tbody.innerHTML = '<tr><td colspan="8" style="color:var(--text-dim);">Sin datos suficientes para esta métrica.</td></tr>';
+      return;
+    }
+    list.forEach((x,i) => {
+      const t = x.t;
+      const idx = difficultyIndex(t);
+      const vel = t.duration ? (t.km/(t.duration/3600)).toFixed(1) + " km/h" : "—";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${i+1}</td><td>${t.name}</td><td>${t.date || "—"}</td><td>${t.type || "Desconocido"}</td>
+        <td class="num">${t.km}</td><td class="num">${t.gain}</td><td class="num">${idx != null ? idx : "—"}</td><td class="num">${vel}</td>`;
+      tr.addEventListener("click", () => focusTrack(t.id));
+      tbody.appendChild(tr);
+    });
+  }
+
+  function openRecords(){ els("recordsModal").classList.remove("hidden"); renderRecords(); }
+  function closeRecords(){ els("recordsModal").classList.add("hidden"); }
+  els("btnRecords").addEventListener("click", openRecords);
+  els("recordsClose").addEventListener("click", closeRecords);
+  els("top10Metric").addEventListener("change", renderTop10);
+  els("recordsModal").addEventListener("click", e => { if(e.target === els("recordsModal")) closeRecords(); });
+  document.addEventListener("keydown", e => { if(e.key === "Escape") closeRecords(); });
+
+  // ---------- calendario de actividad ----------
+  function buildDayData(list){
+    const days = new Map(); // "yyyy-mm-dd" -> {km, gain, n}
+    list.forEach(t => {
+      if(!t.date) return;
+      const d = days.get(t.date) || { km:0, gain:0, n:0 };
+      d.km += t.km; d.gain += t.gain; d.n += 1;
+      days.set(t.date, d);
+    });
+    return days;
+  }
+
+  function renderCalendar(){
+    const list = filteredTracks();
+    const days = buildDayData(list);
+    const years = [...new Set(list.filter(t=>t.date).map(t=>t.date.slice(0,4)))].sort((a,b)=>b-a);
+    const sel = els("calYear");
+    const prevValue = sel.value;
+    sel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("");
+    if(years.includes(prevValue)) sel.value = prevValue;
+    else if(years.length) sel.value = years[0];
+
+    const info = els("calInfo"), grid = els("calGrid");
+    if(!years.length){
+      info.textContent = "No hay rutas con fecha para mostrar con los filtros actuales.";
+      grid.innerHTML = "";
+      return;
+    }
+    const year = +sel.value;
+
+    // valor máximo del año, para repartir los 4 niveles de color
+    const valuesYear = [...days.entries()].filter(([k]) => k.slice(0,4) === String(year)).map(([,v]) => v.km);
+    const maxKm = Math.max(0, ...valuesYear);
+    function levelOf(km){
+      if(!km) return 0;
+      if(maxKm <= 0) return 1;
+      const r = km / maxKm;
+      if(r > 0.75) return 4;
+      if(r > 0.5) return 3;
+      if(r > 0.25) return 2;
+      return 1;
+    }
+
+    const start = new Date(year, 0, 1);
+    const end = new Date(year, 11, 31);
+    const startOffset = (start.getDay() + 6) % 7; // 0 = lunes
+
+    const monthsRow = document.createElement("div");
+    monthsRow.className = "cal-months";
+    const weekdaysCol = document.createElement("div");
+    weekdaysCol.className = "cal-weekdays";
+    ["L","","X","","V","",""].forEach(l => { const s2 = document.createElement("span"); s2.textContent = l; weekdaysCol.appendChild(s2); });
+    const dayGrid = document.createElement("div");
+    dayGrid.className = "cal-grid";
+
+    let totalKm = 0, totalGain = 0, totalN = 0, diasActivos = 0;
+    let col = -1, lastMonth = -1;
+    for(let i=0, d=new Date(start); d<=end; d.setDate(d.getDate()+1), i++){
+      const cellIndex = startOffset + i;
+      const row = cellIndex % 7;
+      const thisCol = Math.floor(cellIndex/7);
+      if(row === 0) col = thisCol;
+      if(d.getMonth() !== lastMonth){
+        lastMonth = d.getMonth();
+        const label = document.createElement("span");
+        label.style.gridColumn = String(thisCol+1);
+        label.textContent = d.toLocaleDateString("es-ES", { month:"short" });
+        monthsRow.appendChild(label);
+      }
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+      const info2 = days.get(key);
+      const km = info2 ? info2.km : 0;
+      const cell = document.createElement("div");
+      cell.className = "cal-day lv" + levelOf(km);
+      cell.style.gridColumn = String(thisCol+1);
+      cell.style.gridRow = String(row+1);
+      const fecha = d.toLocaleDateString("es-ES", { day:"numeric", month:"long", year:"numeric" });
+      cell.title = info2
+        ? `${fecha}: ${info2.n} ruta(s), ${Math.round(info2.km*10)/10} km, ${Math.round(info2.gain)} m`
+        : `${fecha}: sin actividad`;
+      if(info2){ totalKm += info2.km; totalGain += info2.gain; totalN += info2.n; diasActivos++; }
+      dayGrid.appendChild(cell);
+    }
+
+    grid.innerHTML = "";
+    grid.appendChild(monthsRow);
+    const body = document.createElement("div");
+    body.className = "cal-body";
+    body.appendChild(weekdaysCol);
+    body.appendChild(dayGrid);
+    grid.appendChild(body);
+
+    info.textContent = `${year}: ${diasActivos} días activos, ${totalN} ruta(s), `
+      + `${Math.round(totalKm).toLocaleString("es-ES")} km, ${Math.round(totalGain).toLocaleString("es-ES")} m de desnivel. `
+      + `El color depende de los km de cada día respecto al día con más km de ese año.`;
+  }
+
+  function openCalendar(){ els("calModal").classList.remove("hidden"); renderCalendar(); }
+  function closeCalendar(){ els("calModal").classList.add("hidden"); }
+  els("btnCalendar").addEventListener("click", openCalendar);
+  els("calClose").addEventListener("click", closeCalendar);
+  els("calYear").addEventListener("change", renderCalendar);
+  els("calModal").addEventListener("click", e => { if(e.target === els("calModal")) closeCalendar(); });
+  document.addEventListener("keydown", e => { if(e.key === "Escape") closeCalendar(); });
+
+  // ---------- rutas repetidas ----------
+  function trackRefPoints(t, n){ return decimate(t.pts, n); }
+  function centroidOf(pts){
+    let sl=0, so=0;
+    pts.forEach(p => { sl += p[0]; so += p[1]; });
+    return [sl/pts.length, so/pts.length];
+  }
+  function cellKey(lat, lon, size){ return Math.floor(lat/size) + "," + Math.floor(lon/size); }
+
+  function matchFraction(from, to, thresholdM){
+    let hits = 0;
+    from.forEach(p => {
+      let best = Infinity;
+      for(const q of to){
+        const d = haversine(p, q);
+        if(d < best) best = d;
+        if(best <= thresholdM) break;
+      }
+      if(best <= thresholdM) hits++;
+    });
+    return hits / from.length;
+  }
+
+  function tracksSignature(){
+    let h = 0;
+    for(const t of tracks){
+      for(let i=0;i<t.id.length;i++) h = (h*31 + t.id.charCodeAt(i)) >>> 0;
+      h = (h*31 + 7) >>> 0;
+    }
+    return tracks.length + ":" + h;
+  }
+
+  function computeRepeatGroups(){
+    const CELL = 0.02, THRESHOLD_M = 60, MIN_MATCH = 0.7, N_REF = 20;
+    const refs = tracks.map(t => {
+      const ref = trackRefPoints(t, N_REF);
+      const c = centroidOf(ref);
+      return { t, ref, cell: cellKey(c[0], c[1], CELL) };
+    });
+    const buckets = new Map();
+    refs.forEach((r,i) => {
+      if(!buckets.has(r.cell)) buckets.set(r.cell, []);
+      buckets.get(r.cell).push(i);
+    });
+    const parent = refs.map((_,i) => i);
+    function find(x){ while(parent[x] !== x){ parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
+    function union(a,b){ a = find(a); b = find(b); if(a !== b) parent[a] = b; }
+
+    const processed = new Set();
+    for(const key of buckets.keys()){
+      const [cy, cx] = key.split(",").map(Number);
+      let candidates = [];
+      for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++){
+        const k2 = (cy+dy) + "," + (cx+dx);
+        if(buckets.has(k2)) candidates.push(...buckets.get(k2));
+      }
+      candidates = [...new Set(candidates)];
+      for(let a=0; a<candidates.length; a++){
+        for(let b=a+1; b<candidates.length; b++){
+          const i = candidates[a], j = candidates[b];
+          const pairKey = i < j ? i+"-"+j : j+"-"+i;
+          if(processed.has(pairKey)) continue;
+          processed.add(pairKey);
+          if(find(i) === find(j)) continue;
+          const score = (matchFraction(refs[i].ref, refs[j].ref, THRESHOLD_M) + matchFraction(refs[j].ref, refs[i].ref, THRESHOLD_M)) / 2;
+          if(score >= MIN_MATCH) union(i, j);
+        }
+      }
+    }
+
+    const groupsMap = new Map();
+    refs.forEach((r,i) => {
+      const root = find(i);
+      if(!groupsMap.has(root)) groupsMap.set(root, []);
+      groupsMap.get(root).push(r.t);
+    });
+    const groups = [...groupsMap.values()].filter(g => g.length >= 2);
+    groups.forEach(g => {
+      const counts = new Map();
+      g.forEach(t => { const k = t.name.trim().toLowerCase(); counts.set(k, (counts.get(k)||0) + 1); });
+      let best = null, bestN = 0;
+      counts.forEach((n,k) => { if(n > bestN){ bestN = n; best = k; } });
+      const rep = g.find(t => t.name.trim().toLowerCase() === best) || g[0];
+      g._label = rep.name;
+      g.sort((a,b) => (a.date||"").localeCompare(b.date||""));
+    });
+    groups.sort((a,b) => b.length - a.length);
+    return groups;
+  }
+
+  let repeatGroupsCache = null, repeatGroupsCacheKey = null;
+  function getRepeatGroups(force){
+    const key = tracksSignature();
+    if(!force && repeatGroupsCache && repeatGroupsCacheKey === key) return repeatGroupsCache;
+    repeatGroupsCache = computeRepeatGroups();
+    repeatGroupsCacheKey = key;
+    return repeatGroupsCache;
+  }
+
+  function renderRepeats(force){
+    const info = els("repeatsInfo"), list = els("repeatsList");
+    info.textContent = "Analizando rutas…";
+    list.innerHTML = "";
+    setTimeout(() => {
+      const allGroups = getRepeatGroups(force);
+      const filteredIds = new Set(filteredTracks().map(t => t.id));
+      const groups = allGroups
+        .map(g => g.filter(t => filteredIds.has(t.id)))
+        .filter(g => g.length >= 2);
+
+      if(!groups.length){
+        info.textContent = tracks.length
+          ? "No se han encontrado rutas repetidas con los filtros actuales."
+          : "Añade rutas para poder detectar repeticiones.";
+        return;
+      }
+      info.textContent = `${groups.length} ruta(s) repetida(s) detectada(s) entre las que cumplen los filtros actuales `
+        + `(comparando los recorridos por su forma, no por el nombre).`;
+
+      groups.forEach(g => {
+        const withDur = g.filter(t => t.duration);
+        const bestId = withDur.length ? withDur.reduce((a,b) => a.km/(a.duration/3600) > b.km/(b.duration/3600) ? a : b).id : null;
+
+        const card = document.createElement("div");
+        card.className = "repeat-group";
+        const head = document.createElement("div");
+        head.className = "repeat-group-head";
+        head.innerHTML = `<h4>${g[0].name}</h4><span>${g.length} veces · ${g[0].date || "?"} → ${g[g.length-1].date || "?"}</span>`;
+        card.appendChild(head);
+
+        const table = document.createElement("table");
+        table.className = "repeat-table";
+        table.innerHTML = `<thead><tr><th>Fecha</th><th>Tipo</th><th class="num">Km</th><th class="num">Desnivel</th><th class="num">Tiempo mov.</th><th class="num">Vel. media</th></tr></thead>`;
+        const tbody = document.createElement("tbody");
+        g.forEach(t => {
+          const vel = t.duration ? (t.km/(t.duration/3600)).toFixed(1) + " km/h" : "—";
+          const tiempo = t.duration ? formatDuration(t.duration) : "—";
+          const tr = document.createElement("tr");
+          if(t.id === bestId) tr.className = "best";
+          tr.innerHTML = `<td>${t.date || "—"}</td><td>${t.type || "Desconocido"}</td>
+            <td class="num">${t.km}</td><td class="num">${t.gain}</td><td class="num">${tiempo}</td><td class="num">${vel}</td>`;
+          tr.addEventListener("click", () => focusTrack(t.id));
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        card.appendChild(table);
+        list.appendChild(card);
+      });
+    }, 10);
+  }
+
+  function openRepeats(){ els("repeatsModal").classList.remove("hidden"); renderRepeats(false); }
+  function closeRepeats(){ els("repeatsModal").classList.add("hidden"); }
+  els("btnRepeats").addEventListener("click", openRepeats);
+  els("repeatsClose").addEventListener("click", closeRepeats);
+  els("repeatsRecalc").addEventListener("click", () => renderRepeats(true));
+  els("repeatsModal").addEventListener("click", e => { if(e.target === els("repeatsModal")) closeRepeats(); });
+  document.addEventListener("keydown", e => { if(e.key === "Escape") closeRepeats(); });
 
   // ---------- arranque ----------
   (async function init(){
