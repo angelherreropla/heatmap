@@ -4,27 +4,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Heatmap de rutas (OpenStreetMap)</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23121a2e%22/%3E%3Ccircle%20cx%3D%2244%22%20cy%3D%2220%22%20r%3D%227%22%20fill%3D%22%23ff8a69%22/%3E%3Cpath%20d%3D%22M6%2050%20L24%2022%20L34%2036%20L42%2025%20L58%2050%20Z%22%20fill%3D%22%237fae8e%22/%3E%3Cpath%20d%3D%22M34%2036%20L42%2025%20L58%2050%20L30%2050%20Z%22%20fill%3D%22%23ff6f74%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
-  --bg:#0c1512; --panel:#121e19; --panel-2:#182720; --line:#24352d;
-  --text:#e9ece7; --text-dim:#8fa199; --accent:#e3a857; --accent-2:#5fbfb3; --danger:#d9695f;
+  --bg:#121a2e; --panel:#17213a; --panel-2:#1d2844; --line:#2b3552;
+  --text:#eef1f7; --text-dim:#8b95ab; --accent:#ff7a63; --accent-2:#7fae8e; --danger:#e2574c;
+  --accent-grad:linear-gradient(135deg,#ff9a6c,#ff5f7e);
 }
 *{box-sizing:border-box}
 html,body{ height:100%; margin:0; background:var(--bg); color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; overflow:hidden; }
+  font-family:'Public Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; overflow:hidden; }
 .app{ display:flex; flex-direction:column; height:100%; }
 header{ display:flex; align-items:center; gap:14px; padding:12px 18px; background:var(--panel); border-bottom:1px solid var(--line); flex:0 0 auto; }
-header h1{ font-size:16px; font-weight:600; margin:0; }
+header h1{ font-family:'Fraunces',serif; font-weight:700; font-size:17px; margin:0; }
 header .spacer{flex:1}
 header .count{ color:var(--text-dim); font-size:13px; }
-button{ font:inherit; border:1px solid var(--line); background:var(--panel-2); color:var(--text); padding:8px 14px; border-radius:7px; cursor:pointer; }
+button{ font:inherit; border:1px solid var(--line); background:var(--panel-2); color:var(--text); padding:8px 14px; border-radius:9px; cursor:pointer; }
 button:hover{ border-color:var(--accent-2); }
-button.primary{ background:var(--accent); border-color:var(--accent); color:#1b1208; font-weight:600; }
-button.primary:hover{ filter:brightness(1.08); }
+button.primary{ background:var(--accent-grad); border-color:transparent; color:#1a1420; font-weight:600; }
+button.primary:hover{ filter:brightness(1.07); }
 button.ghost{ background:transparent; }
 .body{ flex:1; display:flex; min-height:0; }
 aside{ width:280px; flex:0 0 auto; background:var(--panel); border-right:1px solid var(--line); overflow-y:auto; padding:16px; }
@@ -54,9 +59,33 @@ main{ position:relative; flex:1; min-width:0; }
 .leaflet-control-attribution a{ color:var(--accent-2) !important; }
 .leaflet-popup-content-wrapper, .leaflet-popup-tip{ background:var(--panel-2) !important; color:var(--text) !important; }
 .leaflet-popup-content{ font-size:13px; line-height:1.5; margin:10px 12px; }
+.leaflet-popup-content .route-name{ font-family:'Fraunces',serif; font-weight:700; font-size:14.5px; }
+.modal h3, .modal h4{ font-family:'Fraunces',serif; font-weight:700; }
+#elevTitle{ font-family:'Fraunces',serif; font-weight:700; }
 .leaflet-control-layers{ background:var(--panel-2) !important; color:var(--text) !important; border:1px solid var(--line) !important; }
 .leaflet-control-layers label{ font-size:13px; }
 .leaflet-control-layers-selector{ accent-color:var(--accent); }
+.menubar{ display:flex; align-items:center; gap:4px; }
+.menu{ position:relative; }
+.menu-btn{ font:inherit; border:1px solid transparent; background:transparent; color:var(--text); padding:8px 12px; border-radius:7px; cursor:pointer; }
+.menu-btn:hover{ border-color:var(--line); background:var(--panel-2); }
+.menu.open .menu-btn{ border-color:var(--accent-2); background:var(--panel-2); }
+.menu-dropdown{
+  display:none; position:absolute; top:100%; right:0; margin-top:4px; background:var(--panel-2);
+  border:1px solid var(--line); border-radius:8px; padding:6px; min-width:230px; z-index:1100;
+  box-shadow:0 10px 28px rgba(0,0,0,.45);
+}
+.menu.open .menu-dropdown{ display:flex; flex-direction:column; gap:2px; }
+.menu-item{
+  font:inherit; font-size:13px; text-align:left; background:transparent; border:none; color:var(--text);
+  padding:8px 10px; border-radius:6px; cursor:pointer; white-space:nowrap;
+}
+.menu-item:hover{ background:var(--panel); }
+.menu-item.danger{ color:var(--danger); }
+.menu-sep{ border:none; border-top:1px solid var(--line); margin:4px 2px; }
+.lang-btn{ padding:6px 9px; line-height:1; opacity:.5; display:inline-flex; align-items:center; }
+.lang-btn svg{ display:block; border-radius:2px; }
+.lang-btn.lang-active{ opacity:1; border-color:var(--accent-2); background:var(--panel-2); }
 .leaflet-popup-content select, .leaflet-popup-content input[type=text]{
   background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:6px;
   padding:4px 6px; font:inherit; font-size:12.5px;
@@ -69,8 +98,16 @@ main{ position:relative; flex:1; min-width:0; }
 }
 .elev-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; }
 .elev-header strong{ font-size:13px; font-weight:600; }
-#elevSvg{ cursor:crosshair; }
+#elevSvg{ cursor:crosshair; user-select:none; }
 .elev-header button{ padding:2px 9px; font-size:12px; line-height:1; }
+.elev-tooltip{
+  position:absolute; pointer-events:none; background:var(--panel-2); border:1px solid var(--line);
+  border-radius:6px; padding:5px 9px; font-size:12px; line-height:1.4; white-space:nowrap;
+  transform:translate(-50%,-115%); z-index:950;
+}
+.elev-legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:4px; font-size:11px; color:var(--text-dim); }
+.elev-legend-item{ display:inline-flex; align-items:center; gap:4px; }
+.elev-legend-item .sw{ width:10px; height:10px; border-radius:2px; display:inline-block; border:1px solid var(--line); }
 .stats-modal{ width:min(1100px, 94vw); max-height:90vh; overflow-y:auto; }
 .stats-head{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:6px; }
 .stats-controls{ display:flex; align-items:center; gap:12px; font-size:13px; color:var(--text-dim); }
@@ -126,49 +163,119 @@ main{ position:relative; flex:1; min-width:0; }
 .repeat-table tbody tr{ cursor:pointer; }
 .repeat-table tbody tr:hover{ background:var(--panel-2); }
 .repeat-table tr.best td{ color:var(--accent); font-weight:600; }
+.table-modal{ width:min(1000px, 94vw); max-height:90vh; overflow-y:auto; }
+.table-wrap{ overflow-x:auto; }
+.data-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+.data-table th, .data-table td{ padding:6px 8px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
+.data-table th.num, .data-table td.num{ text-align:right; }
+.data-table th{ cursor:pointer; color:var(--text-dim); font-weight:600; user-select:none; }
+.data-table th:hover{ color:var(--text); }
+.data-table th .arrow{ color:var(--accent); margin-left:3px; }
+.data-table tbody tr{ cursor:pointer; }
+.data-table tbody tr:hover{ background:var(--panel-2); }
+.table-pager{ display:flex; align-items:center; justify-content:center; gap:14px; margin-top:10px; font-size:13px; color:var(--text-dim); }
+.compare-bar{ display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-bottom:6px; font-size:12.5px; color:var(--text-dim); }
+.compare-bar button:disabled{ opacity:.4; cursor:default; }
+.compare-bar button.ready{ border-color:var(--accent-2); color:var(--text); }
+.compare-modal{ width:min(900px, 94vw); max-height:90vh; overflow-y:auto; }
+.compare-info{ display:flex; gap:28px; margin-bottom:10px; font-size:13px; flex-wrap:wrap; }
+.compare-info .cmp-col{ display:flex; flex-direction:column; gap:2px; }
+.compare-info .cmp-name{ font-family:'Fraunces',serif; font-weight:700; font-size:14.5px; display:flex; align-items:center; gap:7px; }
+.compare-info .sw{ width:11px; height:11px; border-radius:50%; display:inline-block; }
+td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
+.yr-modal{ width:min(900px, 94vw); max-height:90vh; overflow-y:auto; }
+.yr-hero{ display:flex; gap:36px; flex-wrap:wrap; margin:18px 0 22px; }
+.yr-hero .yr-num{ font-family:'Fraunces',serif; font-weight:700; font-size:40px; background:var(--accent-grad); -webkit-background-clip:text; background-clip:text; color:transparent; line-height:1; }
+.yr-hero .yr-label{ font-size:12.5px; color:var(--text-dim); margin-top:4px; }
+.yr-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:12px; margin-bottom:18px; }
+.yr-card{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+.yr-card .yr-card-label{ font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.03em; margin-bottom:4px; }
+.yr-card .yr-card-value{ font-family:'Fraunces',serif; font-weight:700; font-size:19px; }
+.yr-card .yr-card-sub{ font-size:12px; color:var(--text-dim); margin-top:2px; }
+.yr-types{ display:flex; flex-direction:column; gap:8px; }
+.yr-type-row{ display:flex; align-items:center; gap:10px; font-size:13px; }
+.yr-type-row .sw{ width:11px; height:11px; border-radius:3px; flex:0 0 auto; }
+.yr-type-row .bar{ flex:1; height:8px; border-radius:4px; background:var(--panel-2); overflow:hidden; }
+.yr-type-row .bar div{ height:100%; }
+.yr-type-row .pct{ width:42px; text-align:right; color:var(--text-dim); font-size:12px; }
 </style>
 </head>
 <body>
 <div class="app">
   <header>
-    <button class="ghost" id="btnFilters" title="Mostrar u ocultar el panel de filtros">☰ Filtros</button>
-    <h1>🏔️ Heatmap de rutas</h1>
+    <h1 data-i18n="app_title">🏔️ Heatmap de rutas</h1>
     <span class="count" id="headerCount"></span>
     <span class="count" id="headerStats"></span>
     <div class="spacer"></div>
-    <button class="ghost" id="btnStats">Gráficos</button>
-    <button class="ghost" id="btnRecords">Récords</button>
-    <button class="ghost" id="btnCalendar">Calendario</button>
-    <button class="ghost hidden" id="btnRepeats">Rutas repetidas</button>
-    <button class="ghost" id="btnHelp">Ayuda</button>
-    <button class="primary" id="btnAdd">Añadir GPX</button>
+    <nav class="menubar" id="menubar">
+      <div class="menu" data-menu="datos">
+        <button class="menu-btn" data-i18n="menu_data">Datos ▾</button>
+        <div class="menu-dropdown">
+          <button class="menu-item" id="btnAdd" data-i18n="add_gpx">Añadir GPX</button>
+          <button class="menu-item" id="btnExport" data-i18n="export_csv">Exportar a CSV</button>
+          <button class="menu-item" id="btnBackup" data-i18n="backup_download">Descargar copia de seguridad</button>
+          <button class="menu-item" id="btnRestore" data-i18n="backup_restore">Restaurar copia de seguridad</button>
+          <hr class="menu-sep">
+          <button class="menu-item danger" id="btnClearAll" data-i18n="clear_all">Vaciar todos los datos</button>
+        </div>
+      </div>
+      <div class="menu" data-menu="filtros">
+        <button class="menu-btn" data-i18n="menu_filters">Filtros ▾</button>
+        <div class="menu-dropdown">
+          <button class="menu-item" id="btnFilters" data-i18n="hide_panel">Ocultar panel</button>
+          <button class="menu-item" id="btnReset" data-i18n="reset_filters">Restablecer filtros</button>
+        </div>
+      </div>
+      <div class="menu" data-menu="paneles">
+        <button class="menu-btn" data-i18n="menu_panels">Paneles ▾</button>
+        <div class="menu-dropdown">
+          <button class="menu-item" id="btnStats" data-i18n="panel_charts">Gráficos</button>
+          <button class="menu-item" id="btnRecords" data-i18n="panel_records">Récords y Top 10</button>
+          <button class="menu-item" id="btnCalendar" data-i18n="panel_calendar">Calendario</button>
+          <button class="menu-item" id="btnTable" data-i18n="panel_table">Tabla de rutas</button>
+          <button class="menu-item" id="btnYearReview" data-i18n="panel_year_review">Resumen anual</button>
+          <button class="menu-item hidden" id="btnRepeats" data-i18n="panel_repeats">Rutas repetidas</button>
+        </div>
+      </div>
+      <button class="ghost" id="btnHelp" data-i18n="help">Ayuda</button>
+      <button class="ghost lang-btn" id="btnLangEs" title="Español">
+        <svg viewBox="0 0 3 2" width="20" height="14"><rect width="3" height="2" fill="#AA151B"/><rect y="0.5" width="3" height="1" fill="#F1BF00"/></svg>
+      </button>
+      <button class="ghost lang-btn" id="btnLangEn" title="English">
+        <svg viewBox="0 0 60 30" width="20" height="14">
+          <rect width="60" height="30" fill="#00247d"/>
+          <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
+          <path d="M0,0 L27,13.5 M0,0 L6,0 L30,15 M60,0 L33,13.5 M60,0 L54,0 L30,15 M0,30 L27,16.5 M0,30 L6,30 L30,15 M60,30 L33,16.5 M60,30 L54,30 L30,15" stroke="#cf142b" stroke-width="2"/>
+          <path d="M30,0 V30 M0,15 H60" stroke="#fff" stroke-width="10"/>
+          <path d="M30,0 V30 M0,15 H60" stroke="#cf142b" stroke-width="6"/>
+        </svg>
+      </button>
+    </nav>
     <input type="file" id="gpxInput" accept=".gpx" multiple class="hidden">
   </header>
   <div class="body">
     <aside id="sidebar">
-      <h2>Nombre</h2>
-      <input type="text" id="nameFilter" placeholder="Buscar en el nombre…" style="width:100%; margin-bottom:4px;">
+      <h2 data-i18n="filter_name">Nombre</h2>
+      <input type="text" id="nameFilter" data-i18n-ph="filter_name_ph" placeholder="Buscar en el nombre…" style="width:100%; margin-bottom:4px;">
 
-      <h2>Año</h2>
-      <div class="filter-actions"><button data-all="year">Todos</button><button data-none="year">Ninguno</button></div>
+      <h2 data-i18n="filter_year">Año</h2>
+      <div class="filter-actions"><button data-all="year" data-i18n="all">Todos</button><button data-none="year" data-i18n="none">Ninguno</button></div>
       <div class="check-list" id="yearList"></div>
 
-      <h2>Tipo de actividad</h2>
-      <div class="filter-actions"><button data-all="type">Todos</button><button data-none="type">Ninguno</button></div>
+      <h2 data-i18n="filter_type">Tipo de actividad</h2>
+      <div class="filter-actions"><button data-all="type" data-i18n="all">Todos</button><button data-none="type" data-i18n="none">Ninguno</button></div>
       <div class="check-list" id="typeList"></div>
 
-      <h2>Distancia (km)</h2>
-      <div class="range-row"><input type="number" id="kmMin" min="0" step="1"><span>a</span><input type="number" id="kmMax" min="0" step="1"></div>
+      <h2 data-i18n="filter_km">Distancia (km)</h2>
+      <div class="range-row"><input type="number" id="kmMin" min="0" step="1"><span data-i18n="range_to">a</span><input type="number" id="kmMax" min="0" step="1"></div>
 
-      <h2>Desnivel positivo (m)</h2>
-      <div class="range-row"><input type="number" id="elMin" min="0" step="10"><span>a</span><input type="number" id="elMax" min="0" step="10"></div>
+      <h2 data-i18n="filter_gain">Desnivel positivo (m)</h2>
+      <div class="range-row"><input type="number" id="elMin" min="0" step="10"><span data-i18n="range_to">a</span><input type="number" id="elMax" min="0" step="10"></div>
 
-      <h2>Índice de dificultad</h2>
-      <div class="range-row"><input type="number" id="idxMin" min="0" step="5"><span>a</span><input type="number" id="idxMax" min="0" step="5"></div>
+      <h2 data-i18n="filter_idx">Índice de dificultad</h2>
+      <div class="range-row"><input type="number" id="idxMin" min="0" step="5"><span data-i18n="range_to">a</span><input type="number" id="idxMax" min="0" step="5"></div>
 
-      <button class="ghost" id="btnReset" style="width:100%; margin-top:6px;">Restablecer filtros</button>
-
-      <button class="ghost" id="btnClearAll" style="width:100%; margin-top:14px; color:var(--danger); border-color:var(--danger);">Vaciar todos los datos</button>
+      <input type="file" id="restoreInput" accept=".json" class="hidden">
     </aside>
     <main>
       <div id="map"></div>
@@ -177,27 +284,71 @@ main{ position:relative; flex:1; min-width:0; }
           <strong id="elevTitle"></strong>
           <button class="ghost" id="elevClose">✕</button>
         </div>
+        <p id="elevSlope" class="stats-info" style="margin:0 0 4px;"></p>
         <svg id="elevSvg" width="100%" height="110"></svg>
+        <div id="elevTooltip" class="elev-tooltip hidden"></div>
+        <div id="elevLegend" class="elev-legend"></div>
       </div>
       <div class="empty" id="emptyState">
-        <h1 style="margin:0;font-size:20px;">Aún no hay rutas cargadas</h1>
-        <p>Selecciona los archivos GPX de tu carpeta (puedes elegirlos todos a la vez) y luego indica de qué tipo son.</p>
-        <button class="primary" id="btnAddEmpty">Seleccionar archivos GPX</button>
+        <h1 style="margin:0;font-size:20px;" data-i18n="empty_title">Aún no hay rutas cargadas</h1>
+        <p data-i18n="empty_text">Selecciona los archivos GPX de tu carpeta (puedes elegirlos todos a la vez) y luego indica de qué tipo son.</p>
+        <button class="primary" id="btnAddEmpty" data-i18n="empty_btn">Seleccionar archivos GPX</button>
       </div>
     </main>
   </div>
   <div class="modal-overlay hidden" id="loadingOverlay">
     <div class="modal" style="display:flex; align-items:center; gap:14px; width:auto;">
       <div class="spinner"></div>
-      <span id="loadingText">Cargando, espere por favor…</span>
+      <span id="loadingText" data-i18n="loading_wait">Cargando, espere por favor…</span>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="tableModal">
+    <div class="modal table-modal">
+      <div class="stats-head">
+        <h3 style="margin:0;" data-i18n="panel_table">Tabla de rutas</h3>
+        <button class="ghost" id="tableClose">✕</button>
+      </div>
+      <p id="tableInfo" class="stats-info"></p>
+      <div class="compare-bar" id="tableCompareBar">
+        <span id="tableCompareCount"></span>
+        <button class="ghost" id="tableCompareBtn" disabled data-i18n="compare_action">Comparar</button>
+      </div>
+      <div class="table-wrap"><table class="data-table" id="dataTable"><thead></thead><tbody></tbody></table></div>
+      <div class="table-pager">
+        <button class="ghost" id="tablePrev" data-i18n="prev">◀ Anterior</button>
+        <span id="tablePageInfo"></span>
+        <button class="ghost" id="tableNext" data-i18n="next">Siguiente ▶</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="yearReviewModal">
+    <div class="modal yr-modal">
+      <div class="stats-head">
+        <h3 style="margin:0;" data-i18n="panel_year_review">Resumen anual</h3>
+        <div class="stats-controls">
+          <label><span data-i18n="filter_year">Año</span> <select id="yrYear"></select></label>
+          <button class="ghost" id="yrClose">✕</button>
+        </div>
+      </div>
+      <div id="yrBody"></div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="compareModal">
+    <div class="modal compare-modal">
+      <div class="stats-head">
+        <h3 style="margin:0;" data-i18n="compare_title">Comparar rutas</h3>
+        <button class="ghost" id="compareClose">✕</button>
+      </div>
+      <div id="compareInfo" class="compare-info"></div>
+      <svg id="compareSvg" width="100%" height="280"></svg>
     </div>
   </div>
   <div class="modal-overlay hidden" id="repeatsModal">
     <div class="modal repeats-modal">
       <div class="stats-head">
-        <h3 style="margin:0;">Rutas repetidas</h3>
+        <h3 style="margin:0;" data-i18n="panel_repeats">Rutas repetidas</h3>
         <div class="stats-controls">
-          <button class="ghost" id="repeatsRecalc">Recalcular</button>
+          <button class="ghost" id="repeatsRecalc" data-i18n="recalc">Recalcular</button>
           <button class="ghost" id="repeatsClose">✕</button>
         </div>
       </div>
@@ -208,40 +359,44 @@ main{ position:relative; flex:1; min-width:0; }
   <div class="modal-overlay hidden" id="calModal">
     <div class="modal cal-modal">
       <div class="stats-head">
-        <h3 style="margin:0;">Calendario de actividad</h3>
+        <h3 style="margin:0;" data-i18n="cal_title">Calendario de actividad</h3>
         <div class="stats-controls">
-          <label>Año <select id="calYear"></select></label>
+          <label><span data-i18n="filter_year">Año</span> <select id="calYear"></select></label>
           <button class="ghost" id="calClose">✕</button>
         </div>
       </div>
       <p id="calInfo" class="stats-info"></p>
       <div class="cal-wrap"><div id="calGrid"></div></div>
       <div class="cal-legend">
-        <span>Menos</span>
+        <span data-i18n="cal_less">Menos</span>
         <span class="cal-day lv0"></span><span class="cal-day lv1"></span><span class="cal-day lv2"></span><span class="cal-day lv3"></span><span class="cal-day lv4"></span>
-        <span>Más</span>
+        <span data-i18n="cal_more">Más</span>
       </div>
     </div>
   </div>
   <div class="modal-overlay hidden" id="recordsModal">
     <div class="modal records-modal">
       <div class="stats-head">
-        <h3 style="margin:0;">Récords y Top 10</h3>
+        <h3 style="margin:0;" data-i18n="panel_records">Récords y Top 10</h3>
         <button class="ghost" id="recordsClose">✕</button>
       </div>
       <p id="recordsInfo" class="stats-info"></p>
       <div class="records-grid" id="recordsGrid"></div>
       <div class="top10-head">
-        <h4 style="margin:14px 0 8px;">Top 10</h4>
-        <label>Ordenar por
+        <h4 style="margin:14px 0 8px;" data-i18n="top10_title">Top 10</h4>
+        <label><span data-i18n="sort_by">Ordenar por</span>
           <select id="top10Metric">
-            <option value="km">Distancia</option>
-            <option value="gain">Desnivel</option>
-            <option value="idx">Índice de dificultad</option>
-            <option value="speed">Velocidad media</option>
-            <option value="duration">Tiempo en movimiento</option>
+            <option value="km" data-i18n="opt_distance">Distancia</option>
+            <option value="gain" data-i18n="opt_gain">Desnivel</option>
+            <option value="idx" data-i18n="opt_idx">Índice de dificultad</option>
+            <option value="speed" data-i18n="opt_speed">Velocidad media</option>
+            <option value="duration" data-i18n="opt_duration">Tiempo en movimiento</option>
           </select>
         </label>
+      </div>
+      <div class="compare-bar" id="top10CompareBar">
+        <span id="top10CompareCount"></span>
+        <button class="ghost" id="top10CompareBtn" disabled data-i18n="compare_action">Comparar</button>
       </div>
       <div class="top10-wrap"><table class="top10-table" id="top10Table"><thead></thead><tbody></tbody></table></div>
     </div>
@@ -249,10 +404,10 @@ main{ position:relative; flex:1; min-width:0; }
   <div class="modal-overlay hidden" id="statsModal">
     <div class="modal stats-modal">
       <div class="stats-head">
-        <h3 style="margin:0;">Gráficos</h3>
+        <h3 style="margin:0;" data-i18n="panel_charts">Gráficos</h3>
         <div class="stats-controls">
-          <label>Agrupar por
-            <select id="statsGroup"><option value="mes">Mes</option><option value="anio">Año</option></select>
+          <label><span data-i18n="group_by">Agrupar por</span>
+            <select id="statsGroup"><option value="mes" data-i18n="month">Mes</option><option value="anio" data-i18n="year">Año</option></select>
           </label>
           <button class="ghost" id="statsClose">✕</button>
         </div>
@@ -260,60 +415,31 @@ main{ position:relative; flex:1; min-width:0; }
       <p id="statsInfo" class="stats-info"></p>
       <div id="statsLegend" class="stats-legend"></div>
       <div class="stats-grid" id="statsGrid">
-        <div class="chart-card"><h4>Kilómetros (km)</h4><div class="chart-box"><canvas id="chKm"></canvas></div></div>
-        <div class="chart-card"><h4>Desnivel positivo (m)</h4><div class="chart-box"><canvas id="chGain"></canvas></div></div>
-        <div class="chart-card"><h4>Horas en movimiento (h)</h4><div class="chart-box"><canvas id="chHours"></canvas></div></div>
-        <div class="chart-card"><h4>Velocidad media por tipo (km/h)</h4><div class="chart-box"><canvas id="chSpeed"></canvas></div></div>
+        <div class="chart-card"><h4 data-i18n="chart_km">Kilómetros (km)</h4><div class="chart-box"><canvas id="chKm"></canvas></div></div>
+        <div class="chart-card"><h4 data-i18n="chart_gain">Desnivel positivo (m)</h4><div class="chart-box"><canvas id="chGain"></canvas></div></div>
+        <div class="chart-card"><h4 data-i18n="chart_hours">Horas en movimiento (h)</h4><div class="chart-box"><canvas id="chHours"></canvas></div></div>
+        <div class="chart-card"><h4 data-i18n="chart_speed">Velocidad media por tipo (km/h)</h4><div class="chart-box"><canvas id="chSpeed"></canvas></div></div>
       </div>
     </div>
   </div>
   <div class="modal-overlay hidden" id="helpModal">
     <div class="modal" style="width:460px; max-height:80vh; overflow-y:auto;">
-      <h3 style="margin:0 0 10px;">Qué se puede hacer aquí</h3>
-      <div style="font-size:13px; line-height:1.6; color:var(--text);">
-        <p><strong>Añadir rutas.</strong> "Añadir GPX" permite seleccionar varios archivos a la vez. Se guardan en este navegador, así que la próxima vez que abras la página seguirán ahí; puedes ir sumando más cuando quieras. Si vuelves a añadir un archivo con el mismo nombre, se actualiza en lugar de duplicarse.</p>
-        <p><strong>Tipo de ruta.</strong> Si el GPX ya trae el tipo (Ride, E-Bike Ride, Hike...), se usa directamente. Si no, te lo pregunta al añadirlo. También puedes cambiarlo luego desde el popup de la ruta. Con Chrome o Edge, el cambio se graba también en el propio archivo GPX (el navegador te pedirá permiso de escritura); con otros navegadores solo queda guardado en la aplicación.</p>
-        <p><strong>Filtros</strong> (panel izquierdo). Todos se combinan entre sí y afectan al mapa, a la capa de densidad y a los totales de la cabecera:</p>
-        <ul style="margin:0 0 10px; padding-left:18px;">
-          <li><em>Nombre:</em> escribe parte del nombre y filtra al momento, sin distinguir mayúsculas.</li>
-          <li><em>Año y tipo de ruta:</em> casillas para marcar o desmarcar, con botones "Todos" y "Ninguno". Cada tipo tiene un cuadradito de color para cambiar el color de sus rutas.</li>
-          <li><em>Distancia, desnivel e índice de dificultad:</em> rango mínimo y máximo.</li>
-          <li>Las rutas sin fecha reconocible o sin índice de dificultad no se ocultan por los filtros de año o de índice.</li>
-          <li>"Restablecer filtros" los deja todos abiertos. "Vaciar todos los datos" (abajo del panel) borra todas las rutas guardadas.</li>
-        </ul>
-        <p><strong>Mostrar u ocultar el panel.</strong> El botón "☰ Filtros" de la esquina superior izquierda oculta el panel para dejar más sitio al mapa, y se recuerda tu elección. Los filtros siguen aplicándose aunque el panel esté oculto.</p>
-        <p><strong>Totales de la cabecera.</strong> Junto al número de rutas ("X de N rutas" si hay filtros activos) se muestran los km, el desnivel, el tiempo en movimiento y la velocidad media de las rutas que cumplen los filtros.</p>
-        <p><strong>Detalles de una ruta.</strong> Al pinchar una ruta en el mapa se resalta en verde y se abre un popup con su nombre, fecha, tipo, km, desnivel, tiempo en movimiento, velocidad media e índice de dificultad. Puedes arrastrar el popup para que no tape la ruta y cambiar su tipo desde ahí.</p>
-        <p><strong>Perfil de elevación.</strong> Al seleccionar una ruta aparece abajo su perfil de altitud. Pasando el ratón por el perfil, se marca ese punto exacto en el mapa. Con la "✕" se cierra.</p>
-        <p><strong>Mapa y capas.</strong> El icono de capas de la esquina superior derecha permite cambiar entre OpenStreetMap, topográfico, ciclista y satélite (se recuerda tu última elección), y activar o desactivar las capas "Rutas" y "Densidad (heatmap)". La densidad muestra en degradado, de azul a rojo, las zonas por las que pasas más veces, respetando los filtros activos.</p>
-        <p><strong>Gráficos.</strong> El botón "Gráficos" abre un panel con la evolución por mes o por año (a elegir) de los kilómetros, el desnivel, las horas en movimiento y la velocidad media, esta última con una línea por tipo de actividad. Usa las rutas que cumplen los filtros en ese momento. Las barras se reparten por colores según el tipo de ruta, y pulsando un tipo en la leyenda se oculta o se muestra a la vez en los cuatro gráficos. Para ver otro subconjunto de rutas, cierra el panel, cambia los filtros y vuelve a abrirlo.</p>
-        <p><strong>Récords y Top 10.</strong> El botón "Récords" muestra, para las rutas que cumplen los filtros, la mejor ruta en seis apartados (más larga, mayor desnivel, más tiempo en movimiento, más rápida, más difícil y más empinada) y una tabla Top 10 que puedes ordenar por distancia, desnivel, tiempo, velocidad media, índice de dificultad o desnivel por km. Al pulsar una tarjeta o una fila se cierra el panel y el mapa se centra en esa ruta, la resalta y abre su popup. La velocidad media y el desnivel por km solo tienen en cuenta rutas de 5 km o más, para que un tramo corto no distorsione el ranking.</p>
-        <p><strong>Récords y Top 10.</strong> El botón "Récords" muestra la ruta más larga, con más desnivel, más rápida de media, con más tiempo en movimiento y más difícil (según el índice), y una tabla Top 10 que puedes ordenar por distancia, desnivel, índice, velocidad media o tiempo en movimiento. Pinchar una tarjeta o una fila cierra la ventana y lleva esa ruta al mapa, con su popup abierto. Todo se calcula sobre las rutas que cumplen los filtros activos.</p>
-        <p><strong>Calendario de actividad.</strong> El botón "Calendario" muestra un cuadradito por día del año elegido, más oscuro o más claro según los km de ese día respecto al día con más km de ese año (al pasar el ratón por un día ves su fecha, km, desnivel y número de rutas). Se calcula sobre las rutas que cumplen los filtros activos.</p>
-        <p><strong>Rutas repetidas.</strong> El botón "Rutas repetidas" agrupa las que comparten el mismo recorrido (comparando la forma del trazado, no el nombre ni la fecha), y dentro de cada grupo muestra un mini-ranking para ver tu evolución; la fila con mejor velocidad media se resalta. Pinchar una fila te lleva a esa ruta en el mapa. El cálculo se guarda en memoria y solo se rehace si añades o quitas rutas; el botón "Recalcular" lo fuerza a mano. Solo se muestran los grupos que aún tienen 2 o más rutas dentro de los filtros activos. Con muchas rutas puede tardar unos segundos la primera vez.</p>
-        <p><strong>Cómo se calculan los datos.</strong></p>
-        <ul style="margin:0 0 10px; padding-left:18px;">
-          <li><em>Desnivel:</em> suma de las subidas de más de 2 m respecto al último punto confirmado, tras corregir puntos de altitud aberrantes.</li>
-          <li><em>Tiempo en movimiento:</em> se descuentan los tramos en los que casi no avanzas (menos de 0,3 m/s, aprox. 1 km/h). La velocidad media usa este tiempo.</li>
-          <li><em>Índice de dificultad:</em> desnivel/10 + km + horas en movimiento × 25. Sin tiempo calculable aparece como "Sin índice", y esas rutas no se ocultan con el filtro del índice.</li>
-        </ul>
-        <p><strong>Actualizaciones.</strong> Si una versión nueva de la aplicación cambia cómo se calcula algo, las rutas ya guardadas conservan los valores antiguos hasta que vuelvas a añadir sus GPX.</p>
-        <p style="margin-bottom:0;"><strong>Datos y privacidad.</strong> Tus rutas se guardan solo en tu navegador y no se envían a ningún servidor. Lo único que se descarga de internet son los mapas de fondo y las librerías de la página.</p>
-      </div>
+      <h3 id="helpTitle" style="margin:0 0 10px;">Qué se puede hacer aquí</h3>
+      <div id="helpBody" style="font-size:13px; line-height:1.6; color:var(--text);"></div>
       <div style="display:flex; justify-content:flex-end; margin-top:14px;">
-        <button class="primary" id="helpClose">Entendido</button>
+        <button class="primary" id="helpClose" data-i18n="understood">Entendido</button>
       </div>
     </div>
   </div>
   <div class="modal-overlay hidden" id="typeModal">
     <div class="modal">
-      <h3 style="margin:0 0 4px;">Tipo de ruta</h3>
+      <h3 style="margin:0 0 4px;" data-i18n="type_modal_title">Tipo de ruta</h3>
       <p id="modalCount" style="margin:0 0 12px; color:var(--text-dim); font-size:13px;"></p>
       <select id="typeSelect" style="width:100%; margin-bottom:8px;"></select>
-      <input type="text" id="typeNew" placeholder="Nombre del nuevo tipo" class="hidden" style="width:100%; margin-bottom:8px;">
+      <input type="text" id="typeNew" data-i18n-ph="new_type_ph" placeholder="Nombre del nuevo tipo" class="hidden" style="width:100%; margin-bottom:8px;">
       <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
-        <button class="ghost" id="typeCancel">Cancelar</button>
-        <button class="primary" id="typeSave">Asignar</button>
+        <button class="ghost" id="typeCancel" data-i18n="cancel">Cancelar</button>
+        <button class="primary" id="typeSave" data-i18n="assign">Asignar</button>
       </div>
     </div>
   </div>
@@ -357,12 +483,270 @@ main{ position:relative; flex:1; min-width:0; }
       tx.oncomplete = res; tx.onerror = () => rej(tx.error);
     });
   }
+  async function dbDelete(id){
+    const db = await openDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(STORE, "readwrite");
+      tx.objectStore(STORE).delete(id);
+      tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+    });
+  }
 
   // ---------- estado ----------
   let tracks = [];
   const fileHandles = new Map(); // id -> FileSystemFileHandle (solo en esta sesión)
   const canWriteFiles = !!window.showOpenFilePicker;
   const els = id => document.getElementById(id);
+
+  // ---------- idioma ----------
+  let LANG = (function(){ try{ return localStorage.getItem("heatmap-lang") || "es"; }catch(e){ return "es"; } })();
+  function LOC(){ return LANG === "en" ? "en-US" : "es-ES"; }
+  const I18N = {
+    es: {
+      app_title: "🏔️ Heatmap de rutas",
+      menu_data: "Datos ▾", menu_filters: "Filtros ▾", menu_panels: "Paneles ▾",
+      add_gpx: "Añadir GPX", export_csv: "Exportar a CSV",
+      backup_download: "Descargar copia de seguridad", backup_restore: "Restaurar copia de seguridad",
+      clear_all: "Vaciar todos los datos",
+      show_panel: "Mostrar panel", hide_panel: "Ocultar panel", reset_filters: "Restablecer filtros",
+      panel_charts: "Gráficos", panel_records: "Récords y Top 10", panel_calendar: "Calendario",
+      panel_table: "Tabla de rutas", panel_repeats: "Rutas repetidas", help: "Ayuda",
+      filter_name: "Nombre", filter_name_ph: "Buscar en el nombre…",
+      filter_year: "Año", filter_type: "Tipo de actividad",
+      all: "Todos", none: "Ninguno",
+      filter_km: "Distancia (km)", filter_gain: "Desnivel positivo (m)", filter_idx: "Índice de dificultad",
+      range_to: "a",
+      empty_title: "Aún no hay rutas cargadas",
+      empty_text: "Selecciona los archivos GPX de tu carpeta (puedes elegirlos todos a la vez) y luego indica de qué tipo son.",
+      empty_btn: "Seleccionar archivos GPX",
+      loading_wait: "Cargando, espere por favor…",
+      elev_no_data: "Este GPX no trae datos de elevación.",
+      elev_hint: "arrastra sobre el gráfico para ampliar un tramo",
+      elev_slope_full: (avgUp,maxUp,maxDown) => `Pendiente media (subidas): ${avgUp} · Pendiente máx.: ${maxUp} % · Bajada máx.: ${maxDown} % (tramos de 200 m)`,
+      elev_segment: (dist,gain,avg,marks) => `Tramo seleccionado: ${dist} km · +${gain} m · ${avg}% de media &nbsp;·&nbsp; ${marks} &nbsp;·&nbsp; <a href="#" class="elev-reset-zoom" style="color:var(--accent-2);">Ver ruta completa</a>`,
+      km_unit: "km",
+      unknown_type: "Desconocido",
+      no_index: "Sin índice",
+      index_label: "Índice de dificultad",
+      save: "Guardar", cancel: "Cancelar", assign: "Asignar",
+      new_type: "+ Nuevo tipo…", new_type_ph: "Nombre del nuevo tipo",
+      rename: "Renombrar", delete_route: "Borrar ruta",
+      type_modal_title: "Tipo de ruta",
+      type_modal_count: (n) => `${n} archivo(s) sin tipo detectado en el GPX`,
+      moving_suffix: "en mov.", no_data: "sin datos",
+      no_lib_charts: "No se ha podido cargar la librería de gráficos (¿sin conexión a internet?).",
+      no_dated_routes: "No hay rutas con fecha para mostrar con los filtros actuales.",
+      based_on: (n, extra) => `Basado en las ${n} rutas que cumplen los filtros actuales${extra}. Pulsa un tipo de la leyenda para ocultarlo o mostrarlo en todos los gráficos. La velocidad media solo cuenta rutas con tiempo en movimiento.`,
+      based_on_extra: (n) => ` (${n} sin fecha reconocible, no incluidas)`,
+      chart_km: "Kilómetros (km)", chart_gain: "Desnivel positivo (m)", chart_hours: "Horas en movimiento (h)",
+      chart_speed: "Velocidad media por tipo (km/h)",
+      group_by: "Agrupar por", month: "Mes", year: "Año",
+      total_label: "Total",
+      no_routes_filters: "No hay rutas con los filtros actuales.",
+      based_on_records: (n) => `Basado en las ${n} rutas que cumplen los filtros actuales.`,
+      rec_longest: "Más larga", rec_most_gain: "Más desnivel", rec_fastest: "Más rápida (media)",
+      rec_most_time: "Más tiempo en movimiento", rec_hardest: "Más difícil (índice)",
+      top10_title: "Top 10", sort_by: "Ordenar por",
+      opt_distance: "Distancia", opt_gain: "Desnivel", opt_idx: "Índice de dificultad",
+      opt_speed: "Velocidad media", opt_duration: "Tiempo en movimiento",
+      col_num: "#", col_route: "Ruta", col_date: "Fecha", col_type: "Tipo", col_km: "Km",
+      col_gain: "Desnivel", col_idx: "Índice", col_speed: "Vel. media", col_time: "Tiempo mov.",
+      not_enough_data: "Sin datos suficientes para esta métrica.",
+      cal_title: "Calendario de actividad",
+      cal_less: "Menos", cal_more: "Más",
+      cal_weekdays: ["L","","X","","V","",""],
+      cal_no_dated: "No hay rutas con fecha para mostrar con los filtros actuales.",
+      cal_no_activity: (fecha) => `${fecha}: sin actividad`,
+      cal_activity: (fecha,n,km,m) => `${fecha}: ${n} ruta(s), ${km} km, ${m} m`,
+      cal_summary: (year,dias,n,km,gain) => `${year}: ${dias} días activos, ${n} ruta(s), ${km} km, ${gain} m de desnivel. El color depende de los km de cada día respecto al día con más km de ese año.`,
+      repeats_analyzing: "Analizando rutas…",
+      repeats_none_filtered: "No se han encontrado rutas repetidas con los filtros actuales.",
+      repeats_add_routes: "Añade rutas para poder detectar repeticiones.",
+      repeats_found: (n) => `${n} ruta(s) repetida(s) detectada(s) entre las que cumplen los filtros actuales (comparando los recorridos por su forma, no por el nombre).`,
+      repeats_times: (n,d1,d2) => `${n} veces · ${d1} → ${d2}`,
+      recalc: "Recalcular",
+      table_count: (n) => `${n} ruta(s) con los filtros actuales.`,
+      table_page: (p,total) => `Página ${p} de ${total}`,
+      table_no_routes: "Sin rutas",
+      prev: "◀ Anterior", next: "Siguiente ▶",
+      leyenda_rutas: "Rutas", leyenda_densidad: "Densidad (heatmap)",
+      capa_osm: "OpenStreetMap", capa_topo: "Topográfico (OpenTopoMap)",
+      capa_ciclista: "Ciclista (CyclOSM)", capa_satelite: "Satélite (Esri)",
+      alert_name_saved_not_file: "El nombre se ha actualizado en la aplicación, pero no se ha podido escribir en el archivo GPX (¿permiso denegado?).",
+      alert_name_saved_app_only: 'El nombre se ha actualizado en la aplicación. Para que también quede grabado en el archivo GPX, vuelve a añadirlo con "Añadir GPX".',
+      confirm_delete: (name) => `Esto borra "${name}" de la aplicación (no borra el archivo GPX de tu disco). ¿Continuar?`,
+      alert_type_saved_not_file: "El tipo se ha actualizado en la aplicación, pero no se ha podido escribir en el archivo GPX (¿permiso denegado?).",
+      alert_type_saved_app_only: 'El tipo se ha actualizado en la aplicación. Para que también quede grabado en el archivo GPX, vuelve a añadirlo con "Añadir GPX".',
+      alert_no_valid_routes: "No se ha podido leer ninguna ruta válida de esos archivos.",
+      alert_bulk_type_app_only: "El tipo se ha guardado en la aplicación. Al asignarlo a varios archivos a la vez no se escribe en los GPX (Chrome pediría un permiso por archivo, uno a uno); si quieres que quede grabado en el archivo, cambia el tipo de esa ruta en concreto desde su popup en el mapa.",
+      alert_no_routes_yet: "No hay rutas guardadas todavía.",
+      confirm_restore: (n) => `Se van a añadir o actualizar ${n} ruta(s) desde la copia de seguridad. Las que ya tengas con el mismo nombre de archivo se sobrescribirán; el resto de tus rutas actuales no se tocan. ¿Continuar?`,
+      alert_backup_unreadable: "No se ha podido leer ese archivo como copia de seguridad.",
+      confirm_clear_all: "Esto borra todas las rutas cargadas en este navegador. ¿Continuar?",
+      loading_reading_gpx: (n) => `Leyendo ${n} archivo(s) GPX…`,
+      loading_saving_routes: "Guardando rutas…",
+      loading_reading_backup: "Leyendo copia de seguridad…",
+      loading_saved_routes: "Cargando rutas guardadas…",
+      header_count_total: (n) => `${n} rutas cargadas`,
+      header_count_partial: (n,total) => `${n} de ${total} rutas`,
+      header_stats: (km,gain,tiempo,vel) => `· ${km} km · ${gain} m desnivel · ${tiempo} · ${vel} media`,
+      time_moving: (h,m) => `${h}h ${m}m en mov.`,
+      time_no_time: "sin datos de tiempo",
+      understood: "Entendido",
+      compare_title: "Comparar rutas",
+      compare_action: "Comparar",
+      panel_year_review: "Resumen anual",
+      yr_no_routes: "No hay rutas con fecha para mostrar con los filtros actuales.",
+      yr_km_total: "km totales",
+      yr_gain_total: "m de desnivel",
+      yr_routes: "Rutas", yr_moving_time: "Tiempo en movimiento", yr_avg_speed: "Velocidad media",
+      yr_avg_index: "Índice medio", yr_busiest_month: "Mes más activo", yr_streak: "Racha más larga",
+      yr_streak_days: (n) => `${n} día(s) seguidos`,
+      yr_longest_route: "Ruta más larga", yr_hardest_route: "Ruta más difícil",
+      yr_by_type: "Reparto por tipo",
+      yr_no_month: "—",
+    },
+    en: {
+      app_title: "🏔️ Route heatmap",
+      menu_data: "Data ▾", menu_filters: "Filters ▾", menu_panels: "Panels ▾",
+      add_gpx: "Add GPX", export_csv: "Export to CSV",
+      backup_download: "Download backup", backup_restore: "Restore backup",
+      clear_all: "Clear all data",
+      show_panel: "Show panel", hide_panel: "Hide panel", reset_filters: "Reset filters",
+      panel_charts: "Charts", panel_records: "Records & Top 10", panel_calendar: "Calendar",
+      panel_table: "Route table", panel_repeats: "Repeated routes", help: "Help",
+      filter_name: "Name", filter_name_ph: "Search by name…",
+      filter_year: "Year", filter_type: "Activity type",
+      all: "All", none: "None",
+      filter_km: "Distance (km)", filter_gain: "Elevation gain (m)", filter_idx: "Difficulty index",
+      range_to: "to",
+      empty_title: "No routes loaded yet",
+      empty_text: "Select the GPX files from your folder (you can pick them all at once) and then say what type they are.",
+      empty_btn: "Select GPX files",
+      loading_wait: "Loading, please wait…",
+      elev_no_data: "This GPX has no elevation data.",
+      elev_hint: "drag over the chart to zoom into a section",
+      elev_slope_full: (avgUp,maxUp,maxDown) => `Average gradient (climbs): ${avgUp} · Max gradient: ${maxUp} % · Max descent: ${maxDown} % (200 m segments)`,
+      elev_segment: (dist,gain,avg,marks) => `Selected section: ${dist} km · +${gain} m · ${avg}% average &nbsp;·&nbsp; ${marks} &nbsp;·&nbsp; <a href="#" class="elev-reset-zoom" style="color:var(--accent-2);">View full route</a>`,
+      km_unit: "km",
+      unknown_type: "Unknown",
+      no_index: "No index",
+      index_label: "Difficulty index",
+      save: "Save", cancel: "Cancel", assign: "Assign",
+      new_type: "+ New type…", new_type_ph: "New type name",
+      rename: "Rename", delete_route: "Delete route",
+      type_modal_title: "Route type",
+      type_modal_count: (n) => `${n} file(s) with no type detected in the GPX`,
+      moving_suffix: "moving", no_data: "no data",
+      no_lib_charts: "Could not load the charting library (no internet connection?).",
+      no_dated_routes: "No routes with a date to show with the current filters.",
+      based_on: (n, extra) => `Based on the ${n} routes matching the current filters${extra}. Click a type in the legend to hide or show it in all charts. Average speed only counts routes with moving time.`,
+      based_on_extra: (n) => ` (${n} with no recognizable date, not included)`,
+      chart_km: "Kilometers (km)", chart_gain: "Elevation gain (m)", chart_hours: "Moving hours (h)",
+      chart_speed: "Average speed by type (km/h)",
+      group_by: "Group by", month: "Month", year: "Year",
+      total_label: "Total",
+      no_routes_filters: "No routes match the current filters.",
+      based_on_records: (n) => `Based on the ${n} routes matching the current filters.`,
+      rec_longest: "Longest", rec_most_gain: "Most elevation gain", rec_fastest: "Fastest (average)",
+      rec_most_time: "Most moving time", rec_hardest: "Hardest (index)",
+      top10_title: "Top 10", sort_by: "Sort by",
+      opt_distance: "Distance", opt_gain: "Elevation gain", opt_idx: "Difficulty index",
+      opt_speed: "Average speed", opt_duration: "Moving time",
+      col_num: "#", col_route: "Route", col_date: "Date", col_type: "Type", col_km: "Km",
+      col_gain: "Gain", col_idx: "Index", col_speed: "Avg. speed", col_time: "Moving time",
+      not_enough_data: "Not enough data for this metric.",
+      cal_title: "Activity calendar",
+      cal_less: "Less", cal_more: "More",
+      cal_weekdays: ["M","","W","","F","",""],
+      cal_no_dated: "No routes with a date to show with the current filters.",
+      cal_no_activity: (fecha) => `${fecha}: no activity`,
+      cal_activity: (fecha,n,km,m) => `${fecha}: ${n} route(s), ${km} km, ${m} m`,
+      cal_summary: (year,dias,n,km,gain) => `${year}: ${dias} active days, ${n} route(s), ${km} km, ${gain} m of elevation gain. Color depends on that day's km relative to your top day that year.`,
+      repeats_analyzing: "Analyzing routes…",
+      repeats_none_filtered: "No repeated routes found with the current filters.",
+      repeats_add_routes: "Add routes to detect repeats.",
+      repeats_found: (n) => `${n} repeated route(s) detected among those matching the current filters (comparing the tracks' shape, not the name).`,
+      repeats_times: (n,d1,d2) => `${n} times · ${d1} → ${d2}`,
+      recalc: "Recalculate",
+      table_count: (n) => `${n} route(s) with the current filters.`,
+      table_page: (p,total) => `Page ${p} of ${total}`,
+      table_no_routes: "No routes",
+      prev: "◀ Previous", next: "Next ▶",
+      leyenda_rutas: "Routes", leyenda_densidad: "Density (heatmap)",
+      capa_osm: "OpenStreetMap", capa_topo: "Topographic (OpenTopoMap)",
+      capa_ciclista: "Cycling (CyclOSM)", capa_satelite: "Satellite (Esri)",
+      alert_name_saved_not_file: "The name was updated in the app, but could not be written to the GPX file (permission denied?).",
+      alert_name_saved_app_only: 'The name was updated in the app. For it to also be saved in the GPX file, add it again with "Add GPX".',
+      confirm_delete: (name) => `This removes "${name}" from the app (it does not delete the GPX file from your disk). Continue?`,
+      alert_type_saved_not_file: "The type was updated in the app, but could not be written to the GPX file (permission denied?).",
+      alert_type_saved_app_only: 'The type was updated in the app. For it to also be saved in the GPX file, add it again with "Add GPX".',
+      alert_no_valid_routes: "Could not read any valid route from those files.",
+      alert_bulk_type_app_only: "The type was saved in the app. Assigning it to several files at once doesn't write it to the GPX files (Chrome would ask for permission for each file, one by one); if you want it saved to the file, change that specific route's type from its popup on the map.",
+      alert_no_routes_yet: "No routes saved yet.",
+      confirm_restore: (n) => `${n} route(s) from the backup will be added or updated. Ones you already have with the same file name will be overwritten; the rest of your current routes are untouched. Continue?`,
+      alert_backup_unreadable: "That file could not be read as a backup.",
+      confirm_clear_all: "This deletes all routes loaded in this browser. Continue?",
+      loading_reading_gpx: (n) => `Reading ${n} GPX file(s)…`,
+      loading_saving_routes: "Saving routes…",
+      loading_reading_backup: "Reading backup…",
+      loading_saved_routes: "Loading saved routes…",
+      header_count_total: (n) => `${n} routes loaded`,
+      header_count_partial: (n,total) => `${n} of ${total} routes`,
+      header_stats: (km,gain,tiempo,vel) => `· ${km} km · ${gain} m gain · ${tiempo} · ${vel} avg`,
+      time_moving: (h,m) => `${h}h ${m}m moving`,
+      time_no_time: "no time data",
+      understood: "Got it",
+      compare_title: "Compare routes",
+      compare_action: "Compare",
+      panel_year_review: "Year in review",
+      yr_no_routes: "No routes with a date to show with the current filters.",
+      yr_km_total: "total km",
+      yr_gain_total: "m of elevation gain",
+      yr_routes: "Routes", yr_moving_time: "Moving time", yr_avg_speed: "Average speed",
+      yr_avg_index: "Average index", yr_busiest_month: "Busiest month", yr_streak: "Longest streak",
+      yr_streak_days: (n) => `${n} day(s) in a row`,
+      yr_longest_route: "Longest route", yr_hardest_route: "Hardest route",
+      yr_by_type: "Breakdown by type",
+      yr_no_month: "—",
+    },
+  };
+  function tr(key, ...args){
+    const entry = (I18N[LANG] && I18N[LANG][key] !== undefined) ? I18N[LANG][key] : I18N.es[key];
+    return typeof entry === "function" ? entry(...args) : entry;
+  }
+
+  function applyI18n(){
+    document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = tr(el.dataset.i18n); });
+    document.querySelectorAll("[data-i18n-ph]").forEach(el => { el.placeholder = tr(el.dataset.i18nPh); });
+    document.documentElement.lang = LANG;
+    els("btnLangEs").classList.toggle("lang-active", LANG === "es");
+    els("btnLangEn").classList.toggle("lang-active", LANG === "en");
+  }
+
+  function setLang(lang){
+    if(lang === LANG) return;
+    LANG = lang;
+    try{ localStorage.setItem("heatmap-lang", LANG); }catch(e){}
+    applyI18n();
+    renderHelp();
+    rebuildFilterLists();
+    if(!els("elevPanel").classList.contains("hidden")) renderProfileView();
+    if(selectedLine && selectedLine._id){
+      const t = tracks.find(tr2 => tr2.id === selectedLine._id);
+      if(t) selectedLine.setPopupContent(popupHtml(t));
+    }
+    if(!els("statsModal").classList.contains("hidden")) renderStats();
+    if(!els("recordsModal").classList.contains("hidden")) renderRecords();
+    if(!els("calModal").classList.contains("hidden")) renderCalendar();
+    if(!els("tableModal").classList.contains("hidden")) renderTable();
+    if(!els("repeatsModal").classList.contains("hidden")) renderRepeats(false);
+    if(!els("yearReviewModal").classList.contains("hidden")) renderYearReview();
+    applyFiltersAndRedraw();
+  }
+  els("btnLangEs").addEventListener("click", () => setLang("es"));
+  els("btnLangEn").addEventListener("click", () => setLang("en"));
+
 
   // ---------- geo utils ----------
   function haversine(a, b){
@@ -458,10 +842,10 @@ main{ position:relative; flex:1; min-width:0; }
 
       let km = 0;
       const eleLimpia = hampelFilter(limpiarTramosPorVelocidad(pts));
-      const profileRaw = [{ km:0, ele:eleLimpia[0], lat:pts[0].lat, lon:pts[0].lon }];
+      const profileRaw = [{ km:0, ele:eleLimpia[0], lat:pts[0].lat, lon:pts[0].lon, time:pts[0].time }];
       for(let i=1;i<pts.length;i++){
         km += haversine([pts[i-1].lat,pts[i-1].lon],[pts[i].lat,pts[i].lon]) / 1000;
-        profileRaw.push({ km, ele:eleLimpia[i], lat:pts[i].lat, lon:pts[i].lon });
+        profileRaw.push({ km, ele:eleLimpia[i], lat:pts[i].lat, lon:pts[i].lon, time:pts[i].time });
       }
       const gain = computeGain(eleLimpia);
       const profile = decimate(profileRaw, 600);
@@ -541,23 +925,40 @@ main{ position:relative; flex:1; min-width:0; }
     await writable.close();
   }
 
+  function setNameInGpxText(xml, name){
+    const esc = String(name).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+    if(/<trk>[\s\S]*?<name>[\s\S]*?<\/name>/.test(xml)){
+      return xml.replace(/(<trk>[\s\S]*?<name>)[\s\S]*?(<\/name>)/, `$1${esc}$2`);
+    }
+    return xml.replace(/<trk>/, `<trk>\n    <name>${esc}</name>`);
+  }
+  async function writeNameToGpx(handle, name){
+    if(!(await ensureWritePermission(handle))) throw new Error("permiso denegado");
+    const file = await handle.getFile();
+    const text = await file.text();
+    const updated = setNameInGpxText(text, name);
+    const writable = await handle.createWritable();
+    await writable.write(updated);
+    await writable.close();
+  }
+
   // ---------- mapa ----------
   const map = L.map("map", { preferCanvas: true, zoomControl:true }).setView([40.4, -3.7], 6);
 
   const baseMaps = {
-    "OpenStreetMap": L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    [tr("capa_osm")]: L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
     }),
-    "Topográfico (OpenTopoMap)": L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+    [tr("capa_topo")]: L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
       attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
       subdomains: "abc", maxZoom: 17,
     }),
-    "Ciclista (CyclOSM)": L.tileLayer("https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png", {
+    [tr("capa_ciclista")]: L.tileLayer("https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png", {
       attribution: '<a href="https://www.cyclosm.org">CyclOSM</a> | Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       subdomains: "abc", maxZoom: 20,
     }),
-    "Satélite (Esri)": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+    [tr("capa_satelite")]: L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
       attribution: 'Tiles &copy; Esri, Maxar, Earthstar Geographics',
       maxZoom: 19,
     }),
@@ -571,7 +972,7 @@ main{ position:relative; flex:1; min-width:0; }
     gradient: { 0.2:"#2b3fff", 0.4:"#00e5cc", 0.6:"#39ff14", 0.8:"#ffd400", 1.0:"#ff2d2d" },
   });
   const sharedRenderer = L.canvas();
-  L.control.layers(baseMaps, { "Rutas": routeLayer, "Densidad (heatmap)": heatLayer }, { position:"topright", collapsed:true }).addTo(map);
+  L.control.layers(baseMaps, { [tr("leyenda_rutas")]: routeLayer, [tr("leyenda_densidad")]: heatLayer }, { position:"topright", collapsed:true }).addTo(map);
   map.on("baselayerchange", e => {
     try{ localStorage.setItem("heatmap-capa-base", e.name); }catch(err){}
   });
@@ -579,93 +980,286 @@ main{ position:relative; flex:1; min-width:0; }
   function typeOptionsHtml(current){
     const options = [...new Set([current, ...seenTypes, ...defaultTypes].filter(Boolean))];
     return options.map(o => `<option value="${o}" ${o===current?"selected":""}>${o}</option>`).join("")
-      + '<option value="__new__">+ Nuevo tipo…</option>';
+      + `<option value="__new__">${tr("new_type")}</option>`;
   }
 
   function popupHtml(t){
     const vel = t.duration ? (t.km/(t.duration/3600)).toFixed(1) + " km/h" : "—";
     const tiempo = t.duration
-      ? `${Math.floor(t.duration/3600)}h ${String(Math.round((t.duration%3600)/60)).padStart(2,"0")}m en mov.`
-      : "sin datos";
+      ? tr("time_moving", Math.floor(t.duration/3600), String(Math.round((t.duration%3600)/60)).padStart(2,"0"))
+      : tr("time_no_time");
     const idx = difficultyIndex(t);
     return `<div style="font-family:inherit;">
-      <strong>${t.name}</strong><br>
+      <strong class="route-name">${t.name}</strong><br>
       ${t.date || ""}${t.type ? " · " + t.type : ""}<br>
-      ${t.km} km · ${t.gain} m desnivel<br>
-      ${tiempo} · ${vel} media<br>
-      Índice de dificultad: ${idx != null ? idx : "Sin índice"}
+      ${t.km} km · ${t.gain} m<br>
+      ${tiempo} · ${vel} ${LANG==="en"?"avg":"media"}<br>
+      ${tr("index_label")}: ${idx != null ? idx : tr("no_index")}
       <div style="margin-top:8px; display:flex; gap:6px; align-items:center;">
         <select class="popup-type-select" data-id="${t.id}" style="flex:1;">${typeOptionsHtml(t.type)}</select>
-        <button class="ghost popup-type-save" data-id="${t.id}" style="padding:6px 10px; font-size:12px;">Guardar</button>
+        <button class="ghost popup-type-save" data-id="${t.id}" style="padding:6px 10px; font-size:12px;">${tr("save")}</button>
       </div>
-      <input type="text" class="popup-type-new hidden" data-id="${t.id}" placeholder="Nombre del nuevo tipo" style="width:100%; margin-top:6px;">
+      <input type="text" class="popup-type-new hidden" data-id="${t.id}" placeholder="${tr("new_type_ph")}" style="width:100%; margin-top:6px;">
+      <div style="margin-top:10px; display:flex; gap:6px;">
+        <button class="ghost popup-rename-btn" data-id="${t.id}" style="flex:1; padding:6px 8px; font-size:12px;">${tr("rename")}</button>
+        <button class="ghost popup-delete-btn" data-id="${t.id}" style="flex:1; padding:6px 8px; font-size:12px; color:var(--danger); border-color:var(--danger);">${tr("delete_route")}</button>
+      </div>
+
+      <div class="popup-rename-row hidden" data-id="${t.id}" style="margin-top:6px; display:flex; gap:6px;">
+        <input type="text" class="popup-rename-input" data-id="${t.id}" value="${String(t.name).replace(/"/g,"&quot;")}" style="flex:1;">
+        <button class="ghost popup-rename-save" data-id="${t.id}" style="padding:6px 10px; font-size:12px;">${tr("save")}</button>
+      </div>
     </div>`;
+  }
+
+  // Pendiente máxima y media (de subida), calculadas sobre tramos de ~200 m para no depender del ruido punto a punto.
+  function slopeStats(valid, segmentM = 200){
+    if(valid.length < 2) return null;
+    let maxUp = 0, maxDown = 0, sumUpSlope = 0, sumUpDist = 0, j = 0;
+    for(let i=0;i<valid.length;i++){
+      if(j < i) j = i;
+      while(j+1 < valid.length && (valid[j+1].km - valid[i].km)*1000 < segmentM) j++;
+      if(j === i) continue;
+      const distM = (valid[j].km - valid[i].km) * 1000;
+      if(distM < segmentM * 0.5) continue;
+      const slope = (valid[j].ele - valid[i].ele) / distM * 100;
+      if(slope > maxUp) maxUp = slope;
+      if(slope < maxDown) maxDown = slope;
+      if(slope > 0){ sumUpSlope += slope*distM; sumUpDist += distM; }
+    }
+    return {
+      maxUp: Math.round(maxUp*10)/10,
+      maxDown: Math.round(maxDown*10)/10,
+      avgUp: sumUpDist > 0 ? Math.round(sumUpSlope/sumUpDist*10)/10 : null,
+    };
   }
 
   let hoverMarker = null;
   let activeProfile = null;
+  let elevTrack = null, elevZoomRange = null, elevDragStartKm = null;
+
+  function gradeAt(valid, kmTarget, windowKm){
+    let a = valid[0], b = valid[valid.length-1], bestA = Infinity, bestB = Infinity;
+    for(const p of valid){
+      let d = Math.abs(p.km - (kmTarget - windowKm/2));
+      if(d < bestA){ bestA = d; a = p; }
+      d = Math.abs(p.km - (kmTarget + windowKm/2));
+      if(d < bestB){ bestB = d; b = p; }
+    }
+    const distM = Math.max(1, (b.km - a.km) * 1000);
+    return (b.ele - a.ele) / distM * 100;
+  }
+
   function drawElevationProfile(t){
-    els("elevTitle").textContent = t.name;
+    elevTrack = t;
+    elevZoomRange = null;
     els("elevPanel").classList.remove("hidden");
+    renderProfileView();
+  }
+
+  function renderProfileView(){
+    const t = elevTrack;
+    els("elevTitle").textContent = t.name;
     const svg = els("elevSvg");
-    const valid = t.profile ? t.profile.filter(p => p.ele != null) : [];
+    const allValid = t.profile ? t.profile.filter(p => p.ele != null) : [];
     activeProfile = null;
-    if(valid.length < 2){
+    if(allValid.length < 2){
       svg.removeAttribute("viewBox");
-      svg.innerHTML = '<text x="10" y="55" fill="#8fa199" font-size="12">Este GPX no trae datos de elevación.</text>';
+      svg.innerHTML = `<text x="10" y="55" fill="#8fa199" font-size="12">${tr("elev_no_data")}</text>`;
+      els("elevSlope").innerHTML = "";
+      els("elevLegend").innerHTML = "";
       return;
     }
-    const w = 900, h = 110, padL = 42, padR = 12, padT = 8, padB = 18;
-    const dists = valid.map(p=>p.km), eles = valid.map(p=>p.ele);
-    const maxD = dists[dists.length-1] || 1;
+    const fullMaxD = allValid[allValid.length-1].km;
+    const kmFrom = elevZoomRange ? Math.max(0, elevZoomRange.from) : 0;
+    const kmTo = elevZoomRange ? Math.min(fullMaxD, elevZoomRange.to) : fullMaxD;
+    const valid = allValid.filter(p => p.km >= kmFrom && p.km <= kmTo);
+    if(valid.length < 2){ elevZoomRange = null; return renderProfileView(); }
+
+    if(elevZoomRange){
+      const gainTramo = computeGain(valid.map(p=>p.ele));
+      const distKm = kmTo - kmFrom;
+      const avgPct = distKm > 0 ? (valid[valid.length-1].ele - valid[0].ele) / (distKm*1000) * 100 : 0;
+      const marks = [0.25, 0.5, 0.75].map(f => {
+        const km = kmFrom + f*distKm;
+        return `${Math.round(f*100)}%: ${gradeAt(valid, km, Math.min(0.2, distKm/3)).toFixed(1)}%`;
+      }).join(" · ");
+      els("elevSlope").innerHTML = tr("elev_segment", distKm.toFixed(2), gainTramo, avgPct.toFixed(1), marks);
+    } else {
+      const slopes = slopeStats(allValid);
+      els("elevSlope").innerHTML = (slopes
+        ? tr("elev_slope_full", slopes.avgUp != null ? slopes.avgUp + " %" : "—", slopes.maxUp, Math.abs(slopes.maxDown))
+        : "") + ` <span style="color:var(--text-dim);">· ${tr("elev_hint")}</span>`;
+    }
+
+  function colorForGrade(g){
+    if(g <= -3) return "#2f9bff";
+    if(g <= 1) return "#39ff6a";
+    if(g <= 5) return "#ffd400";
+    if(g <= 9) return "#ff8a1f";
+    if(g <= 12) return "#ff2d2d";
+    return "#000000";
+  }
+  const GRADE_LEGEND = [
+    { color:"#2f9bff", label:"< -3%" },
+    { color:"#39ff6a", label:"-3% a 1%" },
+    { color:"#ffd400", label:"1% a 5%" },
+    { color:"#ff8a1f", label:"5% a 9%" },
+    { color:"#ff2d2d", label:"9% a 12%" },
+    { color:"#000000", label:"> 12%" },
+  ];
+
+  const w = 900, h = 110, padL = 42, padR = 12, padT = 8, padB = 18;
+    const eles = valid.map(p=>p.ele);
+    const span = (kmTo - kmFrom) || 1;
     const minE = Math.min(...eles), maxE = Math.max(...eles);
     const spanE = (maxE - minE) || 1;
-    const x = d => padL + (d/maxD) * (w-padL-padR);
+    const x = d => padL + ((d-kmFrom)/span) * (w-padL-padR);
     const y = e => padT + (1 - (e-minE)/spanE) * (h-padT-padB);
     const linePts = valid.map(p => `${x(p.km).toFixed(1)},${y(p.ele).toFixed(1)}`).join(" ");
-    const areaPts = `${x(0).toFixed(1)},${y(minE).toFixed(1)} ${linePts} ${x(maxD).toFixed(1)},${y(minE).toFixed(1)}`;
+    const areaPts = `${x(kmFrom).toFixed(1)},${y(minE).toFixed(1)} ${linePts} ${x(kmTo).toFixed(1)},${y(minE).toFixed(1)}`;
     svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
     svg.setAttribute("preserveAspectRatio", "none");
+    let lineaSvg, areaSvg;
+    if(elevZoomRange){
+      const segLineas = [], segAreas = [];
+      for(let i=1;i<valid.length;i++){
+        const a = valid[i-1], b = valid[i];
+        const distM = Math.max(1, (b.km-a.km)*1000);
+        const grade = (b.ele-a.ele)/distM*100;
+        const color = colorForGrade(grade);
+        const xa = x(a.km).toFixed(1), xb = x(b.km).toFixed(1);
+        const ya = y(a.ele).toFixed(1), yb = y(b.ele).toFixed(1);
+        const yBase = y(minE).toFixed(1);
+        segAreas.push(`<polygon points="${xa},${yBase} ${xa},${ya} ${xb},${yb} ${xb},${yBase}" fill="${color}" opacity="0.3"></polygon>`);
+        segLineas.push(`<line x1="${xa}" y1="${ya}" x2="${xb}" y2="${yb}" stroke="${color}" stroke-width="3" stroke-linecap="round"></line>`);
+      }
+      areaSvg = segAreas.join("");
+      lineaSvg = segLineas.join("");
+    } else {
+      areaSvg = `<polygon points="${areaPts}" fill="#e3653a" opacity="0.2"></polygon>`;
+      lineaSvg = `<polyline points="${linePts}" fill="none" stroke="#e3653a" stroke-width="2"></polyline>`;
+    }
     svg.innerHTML = `
-      <polygon points="${areaPts}" fill="#e3653a" opacity="0.2"></polygon>
-      <polyline points="${linePts}" fill="none" stroke="#e3653a" stroke-width="2"></polyline>
-      <text x="${padL}" y="${h-4}" fill="#8fa199" font-size="10">0 km</text>
-      <text x="${w-padR}" y="${h-4}" fill="#8fa199" font-size="10" text-anchor="end">${maxD.toFixed(1)} km</text>
+      ${areaSvg}
+      ${lineaSvg}
+      <text x="${padL}" y="${h-4}" fill="#8fa199" font-size="10">${kmFrom.toFixed(1)} km</text>
+      <text x="${w-padR}" y="${h-4}" fill="#8fa199" font-size="10" text-anchor="end">${kmTo.toFixed(1)} km</text>
       <text x="2" y="${(y(maxE)+4).toFixed(1)}" fill="#8fa199" font-size="10">${Math.round(maxE)} m</text>
       <text x="2" y="${(y(minE)+4).toFixed(1)}" fill="#8fa199" font-size="10">${Math.round(minE)} m</text>
+      <rect id="elevSelRect" x="0" y="0" width="0" height="${h}" fill="rgba(255,255,255,0.18)" style="display:none; pointer-events:none;"></rect>
     `;
-    activeProfile = { valid, maxD, padL, padR, w };
+    els("elevLegend").innerHTML = elevZoomRange
+      ? GRADE_LEGEND.map(g => `<span class="elev-legend-item"><span class="sw" style="background:${g.color};"></span>${g.label}</span>`).join("")
+      : "";
+    activeProfile = { valid, kmFrom, kmTo, padL, padR, w };
+    updateSegmentHighlight();
   }
+
+  let segmentLine = null;
+  function updateSegmentHighlight(){
+    if(segmentLine){ map.removeLayer(segmentLine); segmentLine = null; }
+    if(!elevZoomRange || !activeProfile) return;
+    const latlngs = activeProfile.valid.map(p => [p.lat, p.lon]);
+    segmentLine = L.polyline(latlngs, {
+      color:"#ffffff", weight:7, opacity:0.9, dashArray:"1,8", lineCap:"round",
+      renderer:sharedRenderer, interactive:false,
+    }).addTo(map);
+    segmentLine.bringToFront();
+  }
+
+
   function hideElevationProfile(){
     els("elevPanel").classList.add("hidden");
+    els("elevTooltip").classList.add("hidden");
     activeProfile = null;
+    elevTrack = null; elevZoomRange = null; elevDragStartKm = null;
     if(hoverMarker){ map.removeLayer(hoverMarker); hoverMarker = null; }
+    if(segmentLine){ map.removeLayer(segmentLine); segmentLine = null; }
+    try{ map.getContainer().style.cursor = ""; }catch(e){}
+    setTimeout(() => map.invalidateSize(), 0);
   }
   els("elevClose").addEventListener("click", () => {
     hideElevationProfile();
     if(selectedLine){ selectedLine.closePopup(); }
   });
-  els("elevSvg").addEventListener("mousemove", e => {
-    if(!activeProfile) return;
-    const { valid, maxD, padL, padR, w } = activeProfile;
-    const rect = e.currentTarget.getBoundingClientRect();
+  document.body.addEventListener("click", e => {
+    if(e.target.matches(".elev-reset-zoom")){
+      e.preventDefault();
+      elevZoomRange = null;
+      renderProfileView();
+    }
+  });
+
+  function kmFromEvent(e){
+    const { kmFrom, kmTo, padL, padR, w } = activeProfile;
+    const rect = els("elevSvg").getBoundingClientRect();
     const xView = ((e.clientX - rect.left) / rect.width) * w;
-    const d = Math.max(0, Math.min(maxD, (xView-padL)/(w-padL-padR) * maxD));
-    let nearest = valid[0], bestDiff = Infinity;
-    for(const p of valid){
-      const diff = Math.abs(p.km - d);
+    return Math.max(kmFrom, Math.min(kmTo, kmFrom + (xView-padL)/(w-padL-padR) * (kmTo-kmFrom)));
+  }
+  function nearestPoint(km){
+    let nearest = activeProfile.valid[0], bestDiff = Infinity;
+    for(const p of activeProfile.valid){
+      const diff = Math.abs(p.km - km);
       if(diff < bestDiff){ bestDiff = diff; nearest = p; }
     }
+    return nearest;
+  }
+
+  els("elevSvg").addEventListener("mousedown", e => {
+    if(!activeProfile) return;
+    elevDragStartKm = kmFromEvent(e);
+    els("elevTooltip").classList.add("hidden");
+  });
+  els("elevSvg").addEventListener("mousemove", e => {
+    if(!activeProfile) return;
+    const km = kmFromEvent(e);
+    if(elevDragStartKm != null){
+      const { kmFrom, kmTo, padL, padR, w } = activeProfile;
+      const x = d => padL + ((d-kmFrom)/((kmTo-kmFrom)||1)) * (w-padL-padR);
+      const a = Math.min(elevDragStartKm, km), b = Math.max(elevDragStartKm, km);
+      const rect = els("elevSvg").querySelector("#elevSelRect");
+      if(rect){
+        rect.setAttribute("x", x(a).toFixed(1));
+        rect.setAttribute("width", Math.max(0, x(b)-x(a)).toFixed(1));
+        rect.style.display = "block";
+      }
+      return;
+    }
+    const nearest = nearestPoint(km);
+    const slopeHere = gradeAt(activeProfile.valid, nearest.km, Math.min(0.15, (activeProfile.kmTo-activeProfile.kmFrom)/6 || 0.15));
+    const tip = els("elevTooltip");
+    const panelRect = els("elevPanel").getBoundingClientRect();
+    const svgRect = e.currentTarget.getBoundingClientRect();
+    tip.style.left = (e.clientX - panelRect.left) + "px";
+    tip.style.top = (svgRect.top - panelRect.top) + "px";
+    tip.innerHTML = `${nearest.km.toFixed(2)} km · ${Math.round(nearest.ele)} m · ${slopeHere >= 0 ? "+" : ""}${slopeHere.toFixed(1)}%`;
+    tip.classList.remove("hidden");
     if(!hoverMarker){
       hoverMarker = L.circleMarker([nearest.lat, nearest.lon], {
-        radius:7, color:"#39ff14", weight:2, fillColor:"#39ff14", fillOpacity:0.9,
+        radius:7, color:"#39ff14", weight:2, fillColor:"#39ff14", fillOpacity:0.9, renderer:sharedRenderer,
       }).addTo(map);
     } else {
       hoverMarker.setLatLng([nearest.lat, nearest.lon]);
     }
   });
+  window.addEventListener("mouseup", e => {
+    if(elevDragStartKm == null || !activeProfile) return;
+    const km = kmFromEvent(e);
+    const a = Math.min(elevDragStartKm, km), b = Math.max(elevDragStartKm, km);
+    elevDragStartKm = null;
+    const span = activeProfile.kmTo - activeProfile.kmFrom;
+    if((b-a) >= Math.max(0.03, span*0.02)){
+      elevZoomRange = { from:a, to:b };
+      renderProfileView();
+    } else {
+      const rect = els("elevSvg").querySelector("#elevSelRect");
+      if(rect) rect.style.display = "none";
+    }
+  });
   els("elevSvg").addEventListener("mouseleave", () => {
     if(hoverMarker){ map.removeLayer(hoverMarker); hoverMarker = null; }
+    els("elevTooltip").classList.add("hidden");
   });
 
 
@@ -792,7 +1386,7 @@ main{ position:relative; flex:1; min-width:0; }
 
   function updateHeaderTotals(list){
     els("headerCount").textContent = tracks.length
-      ? (list.length === tracks.length ? `${tracks.length} rutas cargadas` : `${list.length} de ${tracks.length} rutas`)
+      ? (list.length === tracks.length ? tr("header_count_total", tracks.length) : tr("header_count_partial", list.length, tracks.length))
       : "";
     if(!list.length){ els("headerStats").textContent = ""; return; }
     const km = list.reduce((s,t)=>s+t.km,0);
@@ -801,10 +1395,10 @@ main{ position:relative; flex:1; min-width:0; }
     const sec = withDuration.reduce((s,t)=>s+t.duration,0);
     const kmConDuracion = withDuration.reduce((s,t)=>s+t.km,0);
     const h = Math.floor(sec/3600), m = Math.round((sec%3600)/60);
-    const tiempo = sec ? `${h}h ${String(m).padStart(2,"0")}m en mov.` : "sin datos de tiempo";
+    const tiempo = sec ? tr("time_moving", h, String(m).padStart(2,"0")) : tr("time_no_time");
     const vel = sec ? (kmConDuracion/(sec/3600)).toFixed(1) + " km/h" : "—";
-    els("headerStats").textContent =
-      `· ${Math.round(km).toLocaleString("es-ES")} km · ${Math.round(gain).toLocaleString("es-ES")} m desnivel · ${tiempo} · ${vel} media`;
+    els("headerStats").textContent = tr("header_stats",
+      Math.round(km).toLocaleString(LOC()), Math.round(gain).toLocaleString(LOC()), tiempo, vel);
   }
 
   function applyFiltersAndRedraw(){
@@ -822,9 +1416,9 @@ main{ position:relative; flex:1; min-width:0; }
       const options = [...new Set([...seenTypes].filter(t=>t!=="Desconocido"))];
       defaultTypes.forEach(t => { if(!options.includes(t)) options.push(t); });
       select.innerHTML = options.map(t=>`<option value="${t}">${t}</option>`).join("")
-        + '<option value="__new__">+ Nuevo tipo…</option>';
+        + `<option value="__new__">${tr("new_type")}</option>`;
       newInput.classList.add("hidden"); newInput.value = "";
-      els("modalCount").textContent = `${count} archivo(s) sin tipo detectado en el GPX`;
+      els("modalCount").textContent = tr("type_modal_count", count);
       overlay.classList.remove("hidden");
 
       function onChange(){ newInput.classList.toggle("hidden", select.value !== "__new__"); }
@@ -850,6 +1444,36 @@ main{ position:relative; flex:1; min-width:0; }
   function showLoading(text){ els("loadingText").textContent = text; els("loadingOverlay").classList.remove("hidden"); }
   function hideLoading(){ els("loadingOverlay").classList.add("hidden"); }
 
+  async function renameTrack(id, newName){
+    const t = tracks.find(tr => tr.id === id);
+    const nombre = (newName || "").trim();
+    if(!t || !nombre) return;
+    t.name = nombre;
+    await dbPutAll([t]);
+    const handle = fileHandles.get(id);
+    if(handle){
+      try{ await writeNameToGpx(handle, nombre); }
+      catch(e){ alert(tr("alert_name_saved_not_file")); }
+    } else {
+      alert(tr("alert_name_saved_app_only"));
+    }
+    rebuildFilterLists();
+    applyFiltersAndRedraw();
+    if(selectedLine) selectedLine.setPopupContent(popupHtml(t));
+  }
+
+  async function deleteTrack(id){
+    const t = tracks.find(tr => tr.id === id);
+    if(!t) return;
+    if(!confirm(tr("confirm_delete", t.name))) return;
+    await dbDelete(id);
+    tracks = tracks.filter(tr => tr.id !== id);
+    fileHandles.delete(id);
+    map.closePopup();
+    rebuildFilterLists();
+    applyFiltersAndRedraw();
+  }
+
   async function applyTypeChange(id, newType){
     const t = tracks.find(tr => tr.id === id);
     if(!t || !newType) return;
@@ -859,9 +1483,9 @@ main{ position:relative; flex:1; min-width:0; }
     const handle = fileHandles.get(id);
     if(handle){
       try{ await writeTypeToGpx(handle, newType); }
-      catch(e){ alert("El tipo se ha actualizado en la aplicación, pero no se ha podido escribir en el archivo GPX (¿permiso denegado?)."); }
+      catch(e){ alert(tr("alert_type_saved_not_file")); }
     } else {
-      alert('El tipo se ha actualizado en la aplicación. Para que también quede grabado en el archivo GPX, vuelve a añadirlo con "Añadir GPX".');
+      alert(tr("alert_type_saved_app_only"));
     }
     map.closePopup();
     rebuildFilterLists();
@@ -889,7 +1513,7 @@ main{ position:relative; flex:1; min-width:0; }
       .map((f,i) => ({ file:f, handle: handles ? handles[i] : null }))
       .filter(x => /\.gpx$/i.test(x.file.name));
     if(!items.length) return;
-    showLoading(`Leyendo ${items.length} archivo(s) GPX…`);
+    showLoading(tr("loading_reading_gpx", items.length));
     let results;
     try{
       results = await Promise.all(items.map(async x => {
@@ -898,31 +1522,24 @@ main{ position:relative; flex:1; min-width:0; }
       }));
     } finally { hideLoading(); }
     const valid = results.filter(Boolean);
-    if(!valid.length){ alert("No se ha podido leer ninguna ruta válida de esos archivos."); return; }
+    if(!valid.length){ alert(tr("alert_no_valid_routes")); return; }
 
     const sinTipo = valid.filter(x => !x.t.type);
     if(sinTipo.length){
       const type = await askType(sinTipo.length);
       const finalType = type === null ? "Desconocido" : type;
-      let escritos = 0, fallos = 0;
-      for(const x of sinTipo){
-        x.t.type = finalType;
-        if(x.handle){
-          try{ await writeTypeToGpx(x.handle, finalType); escritos++; }
-          catch(e){ fallos++; }
-        }
-      }
-      if(!canWriteFiles){
-        alert("El tipo se ha guardado en la aplicación. Para que también quede grabado en los archivos GPX, usa Chrome o Edge.");
-      } else if(fallos){
-        alert(`El tipo se ha guardado en la aplicación, pero no se ha podido escribir en ${fallos} archivo(s) (¿permiso denegado?).`);
-      }
+      sinTipo.forEach(x => { x.t.type = finalType; });
+      // El tipo asignado a varios archivos a la vez se guarda solo en la aplicación: escribirlo
+      // en cada GPX pediría un permiso de Chrome por archivo, uno a uno (la ventana "¿Quieres
+      // guardar los cambios de...?"), inviable con varios archivos. Si quieres que quede grabado
+      // también en el GPX, cambia el tipo de esa ruta en concreto desde su popup en el mapa.
+      if(sinTipo.length > 1) alert(tr("alert_bulk_type_app_only"));
     }
 
     valid.forEach(x => { if(x.handle) fileHandles.set(x.t.id, x.handle); });
     const parsed = valid.map(x => x.t);
 
-    showLoading("Guardando rutas…");
+    showLoading(tr("loading_saving_routes"));
     try{
       await dbPutAll(parsed);
       const byId = new Map(tracks.map(t => [t.id, t]));
@@ -936,6 +1553,7 @@ main{ position:relative; flex:1; min-width:0; }
   // ---------- panel de filtros: mostrar / ocultar ----------
   function setSidebar(visible){
     els("sidebar").classList.toggle("hidden", !visible);
+    els("btnFilters").textContent = visible ? "Ocultar panel" : "Mostrar panel";
     try{ localStorage.setItem("heatmap-panel-filtros", visible ? "1" : "0"); }catch(e){}
     setTimeout(() => map.invalidateSize(), 50);
   }
@@ -946,15 +1564,136 @@ main{ position:relative; flex:1; min-width:0; }
     if(localStorage.getItem("heatmap-panel-filtros") === "0") setSidebar(false);
   }catch(e){}
 
-  els("btnHelp").addEventListener("click", () => els("helpModal").classList.remove("hidden"));
+  // ---------- menú superior ----------
+  document.querySelectorAll(".menu-btn").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const menu = btn.closest(".menu");
+      const wasOpen = menu.classList.contains("open");
+      document.querySelectorAll(".menu.open").forEach(m => m.classList.remove("open"));
+      if(!wasOpen) menu.classList.add("open");
+    });
+  });
+  document.querySelectorAll(".menu-dropdown").forEach(dd => {
+    dd.addEventListener("click", e => {
+      if(e.target.matches(".menu-item")) e.target.closest(".menu").classList.remove("open");
+    });
+  });
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".menu.open").forEach(m => m.classList.remove("open"));
+  });
+  document.addEventListener("keydown", e => {
+    if(e.key === "Escape") document.querySelectorAll(".menu.open").forEach(m => m.classList.remove("open"));
+  });
+
+  const HELP_HTML = {
+    es: `
+      <ul style="margin:0 0 10px; padding-left:18px;">
+        <li><strong>Menú superior:</strong> <em>Datos</em> (añadir GPX, exportar CSV, copia de seguridad, vaciar todo), <em>Filtros</em> (mostrar/ocultar panel, restablecer) y <em>Paneles</em> (gráficos, récords, calendario, tabla). "Ayuda" y las banderas quedan aparte.</li>
+        <li><strong>Añadir rutas</strong> desde Datos → Añadir GPX, seleccionando varios archivos a la vez; se guardan en este navegador. Si el GPX no trae el tipo, te lo pregunta; ese tipo asignado a varios archivos de golpe solo se guarda en la aplicación. Si luego cambias el tipo, renombras o borras una ruta concreta desde su popup, con Chrome o Edge ese cambio sí se graba también en su archivo GPX (pidiéndote confirmar el permiso una vez, por ser un solo archivo).</li>
+        <li><strong>Filtros</strong> (panel izquierdo): nombre, año, tipo (con su color, que puedes cambiar), distancia, desnivel e índice de dificultad. Se combinan entre sí y afectan al mapa y a los totales de la cabecera.</li>
+        <li><strong>Una ruta en el mapa:</strong> al pincharla se resalta y se abre su popup (datos, cambiar tipo, renombrar, borrar) y, abajo, su perfil de elevación. Arrastra sobre el perfil para ampliar un tramo y ver su pendiente coloreada por sectores; pasa el ratón para ver km, altitud y pendiente de cada punto.</li>
+        <li><strong>Mapa y capas:</strong> el icono de capas (arriba a la derecha) cambia el fondo del mapa y activa o desactiva las rutas y la capa de densidad (heatmap).</li>
+        <li><strong>Paneles:</strong> Gráficos (evolución mensual o anual), Récords y Top 10 (ordenable), Calendario de actividad (un cuadradito por día) y Tabla de rutas (ordenable por columna). Todos usan las rutas que cumplen los filtros activos.</li>
+        <li><strong>Datos:</strong> exporta a CSV, o haz una copia de seguridad completa (y restáurala) desde el menú Datos. "Vaciar todos los datos" borra todo lo guardado en este navegador.</li>
+      </ul>
+      <p><strong>Cómo se calcula:</strong> el desnivel suma subidas de más de 2 m tras limpiar la altitud de aberraciones; el tiempo en movimiento descuenta los tramos a menos de 0,3 m/s; el índice de dificultad es desnivel/10 + km + horas en movimiento × 25 (si no hay tiempo calculable, sale "Sin índice").</p>
+      <p style="margin-bottom:0;"><strong>Privacidad:</strong> tus rutas se guardan solo en este navegador, nunca se suben a ningún servidor. Si cambias de navegador o lo limpias, haz antes una copia de seguridad.</p>
+    `,
+    en: `
+      <ul style="margin:0 0 10px; padding-left:18px;">
+        <li><strong>Top menu:</strong> <em>Data</em> (add GPX, export CSV, backup, clear all), <em>Filters</em> (show/hide panel, reset) and <em>Panels</em> (charts, records, calendar, table). "Help" and the flags sit apart.</li>
+        <li><strong>Add routes</strong> from Data → Add GPX, picking several files at once; they're saved in this browser. If a GPX has no type, you'll be asked; a type assigned to many files at once is only saved in the app. If you later change the type, rename, or delete one specific route from its popup, with Chrome or Edge that change is also written to its GPX file (asking you to confirm the permission once, since it's a single file).</li>
+        <li><strong>Filters</strong> (left panel): name, year, type (with its own color, which you can change), distance, elevation gain and difficulty index. They all combine and affect the map and the header totals.</li>
+        <li><strong>A route on the map:</strong> clicking it highlights it and opens its popup (data, change type, rename, delete) and, below, its elevation profile. Drag over the profile to zoom into a section and see its gradient colored by sector; hover to see the km, altitude and gradient at any point.</li>
+        <li><strong>Map and layers:</strong> the layers icon (top right) changes the map background and toggles the routes and density (heatmap) layers.</li>
+        <li><strong>Panels:</strong> Charts (monthly or yearly trends), Records & Top 10 (sortable), Activity calendar (one square per day) and Route table (sortable by column). All of them use the routes matching the active filters.</li>
+        <li><strong>Data:</strong> export to CSV, or make a full backup (and restore it) from the Data menu. "Clear all data" deletes everything saved in this browser.</li>
+      </ul>
+      <p><strong>How it's calculated:</strong> elevation gain adds climbs of more than 2 m after cleaning up altitude glitches; moving time excludes sections under 0.3 m/s; the difficulty index is gain/10 + km + moving hours × 25 (shown as "No index" when no time can be calculated).</p>
+      <p style="margin-bottom:0;"><strong>Privacy:</strong> your routes are stored only in this browser and never uploaded to any server. If you switch or clear your browser, back up first.</p>
+    `,
+  };
+  function renderHelp(){
+    els("helpTitle").textContent = LANG === "en" ? "What you can do here" : "Qué se puede hacer aquí";
+    els("helpBody").innerHTML = HELP_HTML[LANG] || HELP_HTML.es;
+  }
+  els("btnHelp").addEventListener("click", () => { renderHelp(); els("helpModal").classList.remove("hidden"); });
   els("helpClose").addEventListener("click", () => els("helpModal").classList.add("hidden"));
 
   els("btnAdd").addEventListener("click", pickGpxFiles);
   els("btnAddEmpty").addEventListener("click", pickGpxFiles);
   els("gpxInput").addEventListener("change", e => handleGpxFiles(e.target.files, null));
 
+  // ---------- exportar a CSV ----------
+  function csvField(v){
+    const s = v == null ? "" : String(v);
+    return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  els("btnExport").addEventListener("click", () => {
+    const list = filteredTracks();
+    const header = ["Nombre","Fecha","Tipo","Km","Desnivel (m)","Tiempo en movimiento (h)","Velocidad media (km/h)","Índice de dificultad"];
+    const rows = list.map(t => {
+      const idx = difficultyIndex(t);
+      const horas = t.duration ? Math.round((t.duration/3600)*100)/100 : "";
+      const vel = t.duration ? Math.round((t.km/(t.duration/3600))*10)/10 : "";
+      return [t.name, t.date || "", t.type || "Desconocido", t.km, t.gain, horas, vel, idx != null ? idx : ""];
+    });
+    const csv = [header, ...rows].map(r => r.map(csvField).join(";")).join("\r\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const fecha = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = `rutas_${fecha}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // ---------- copia de seguridad ----------
+  els("btnBackup").addEventListener("click", () => {
+    if(!tracks.length){ alert(tr("alert_no_routes_yet")); return; }
+    const payload = { app: "heatmap-rutas-osm", version: 1, exportedAt: new Date().toISOString(), tracks };
+    const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `backup_rutas_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  els("btnRestore").addEventListener("click", () => els("restoreInput").click());
+  els("restoreInput").addEventListener("change", async e => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if(!file) return;
+    showLoading(tr("loading_reading_backup"));
+    try{
+      const data = JSON.parse(await file.text());
+      const incoming = Array.isArray(data) ? data : Array.isArray(data.tracks) ? data.tracks : null;
+      if(!incoming) throw new Error("formato no reconocido");
+      const validas = incoming.filter(t => t && t.id && Array.isArray(t.pts));
+      if(!validas.length) throw new Error("sin rutas válidas");
+      if(!confirm(tr("confirm_restore", validas.length))){
+        hideLoading();
+        return;
+      }
+      await dbPutAll(validas);
+      const byId = new Map(tracks.map(t => [t.id, t]));
+      validas.forEach(t => byId.set(t.id, t));
+      tracks = [...byId.values()];
+      rebuildFilterLists();
+      applyFiltersAndRedraw();
+    }catch(err){
+      alert(tr("alert_backup_unreadable"));
+    } finally {
+      hideLoading();
+    }
+  });
+
   els("btnClearAll").addEventListener("click", async () => {
-    if(!confirm("Esto borra todas las rutas cargadas en este navegador. ¿Continuar?")) return;
+    if(!confirm(tr("confirm_clear_all"))) return;
     await dbClear();
     tracks = [];
     seenYears.clear(); seenTypes.clear();
@@ -974,8 +1713,8 @@ main{ position:relative; flex:1; min-width:0; }
     els("idxMin").value = 0;
     els("idxMax").value = idxs.length ? Math.ceil(Math.max(...idxs)) : "";
     els("nameFilter").value = "";
-    document.querySelectorAll("#yearList input").forEach(i=>{ i.checked=true; state.years.add(parseInt(i.dataset.year,10)); });
-    document.querySelectorAll("#typeList input").forEach(i=>{ i.checked=true; state.types.add(i.dataset.type); });
+    document.querySelectorAll("#yearList input[type=checkbox]").forEach(i=>{ i.checked=true; state.years.add(parseInt(i.dataset.year,10)); });
+    document.querySelectorAll("#typeList input[type=checkbox]").forEach(i=>{ i.checked=true; state.types.add(i.dataset.type); });
     readRangeInputs();
     applyFiltersAndRedraw();
   });
@@ -990,7 +1729,7 @@ main{ position:relative; flex:1; min-width:0; }
       const kind = e.target.dataset.all || e.target.dataset.none;
       const isAll = !!e.target.dataset.all;
       const listId = kind === "year" ? "yearList" : "typeList";
-      document.querySelectorAll(`#${listId} input`).forEach(i => {
+      document.querySelectorAll(`#${listId} input[type=checkbox]`).forEach(i => {
         i.checked = isAll;
         const val = kind==="year" ? parseInt(i.dataset.year,10) : i.dataset.type;
         if(isAll) state[kind+"s"].add(val); else state[kind+"s"].delete(val);
@@ -1002,14 +1741,24 @@ main{ position:relative; flex:1; min-width:0; }
       const newInput = document.querySelector(`.popup-type-new[data-id="${CSS.escape(id)}"]`);
       let val = select.value === "__new__" ? newInput.value.trim() : select.value;
       applyTypeChange(id, val || "Desconocido");
+    } else if(e.target.matches(".popup-rename-btn")){
+      const id = e.target.dataset.id;
+      const row = document.querySelector(`.popup-rename-row[data-id="${CSS.escape(id)}"]`);
+      if(row) row.classList.toggle("hidden");
+    } else if(e.target.matches(".popup-rename-save")){
+      const id = e.target.dataset.id;
+      const input = document.querySelector(`.popup-rename-input[data-id="${CSS.escape(id)}"]`);
+      if(input) renameTrack(id, input.value);
+    } else if(e.target.matches(".popup-delete-btn")){
+      deleteTrack(e.target.dataset.id);
     }
   });
   document.body.addEventListener("change", e => {
-    if(e.target.matches("#yearList input")){
+    if(e.target.matches("#yearList input[type=checkbox]")){
       const y = parseInt(e.target.dataset.year,10);
       e.target.checked ? state.years.add(y) : state.years.delete(y);
       applyFiltersAndRedraw();
-    } else if(e.target.matches("#typeList input")){
+    } else if(e.target.matches("#typeList input[type=checkbox]")){
       const ty = e.target.dataset.type;
       e.target.checked ? state.types.add(ty) : state.types.delete(ty);
       applyFiltersAndRedraw();
@@ -1054,7 +1803,7 @@ main{ position:relative; flex:1; min-width:0; }
   function periodLabel(key, group){
     if(group === "anio") return key;
     const [y,m] = key.split("-").map(Number);
-    return new Date(y, m-1, 1).toLocaleDateString("es-ES", { month:"short", year:"2-digit" });
+    return new Date(y, m-1, 1).toLocaleDateString(LOC(), { month:"short", year:"2-digit" });
   }
   function periodRange(minKey, maxKey, group){
     const out = [];
@@ -1083,18 +1832,16 @@ main{ position:relative; flex:1; min-width:0; }
     legend.innerHTML = "";
     if(typeof Chart === "undefined"){
       grid.classList.add("hidden");
-      info.textContent = "No se ha podido cargar la librería de gráficos (¿sin conexión a internet?).";
+      info.textContent = tr("no_lib_charts");
       return;
     }
     if(!conFecha.length){
       grid.classList.add("hidden");
-      info.textContent = "No hay rutas con fecha para mostrar con los filtros actuales.";
+      info.textContent = tr("no_dated_routes");
       return;
     }
     grid.classList.remove("hidden");
-    info.textContent = `Basado en las ${conFecha.length} rutas que cumplen los filtros actuales`
-      + (sinFecha ? ` (${sinFecha} sin fecha reconocible, no incluidas)` : "")
-      + `. Pulsa un tipo de la leyenda para ocultarlo o mostrarlo en todos los gráficos. La velocidad media solo cuenta rutas con tiempo en movimiento.`;
+    info.textContent = tr("based_on", conFecha.length, sinFecha ? tr("based_on_extra", sinFecha) : "");
 
     const group = els("statsGroup").value;
     const keys = conFecha.map(t => periodKey(t.date, group)).sort();
@@ -1144,7 +1891,7 @@ main{ position:relative; flex:1; min-width:0; }
             tooltip: {
               callbacks: {
                 label: c => c.parsed.y ? `${c.dataset.label}: ${c.parsed.y} ${unit}` : null,
-                footer: items => "Total: " + (Math.round(items.reduce((a,i) => a + i.parsed.y, 0)*10)/10) + " " + unit,
+                footer: items => tr("total_label") + ": " + (Math.round(items.reduce((a,i) => a + i.parsed.y, 0)*10)/10) + " " + unit,
               },
             },
           },
@@ -1203,6 +1950,165 @@ main{ position:relative; flex:1; min-width:0; }
     if(found){ map.fitBounds(found.getBounds(), { padding:[40,40], maxZoom:15 }); setTimeout(() => found.fire("click"), 260); }
   }
 
+
+  // ---------- comparar rutas ----------
+  const compareSelection = new Set();
+  function toggleCompare(id){
+    if(compareSelection.has(id)) compareSelection.delete(id);
+    else {
+      if(compareSelection.size >= 2){ const first = [...compareSelection][0]; compareSelection.delete(first); }
+      compareSelection.add(id);
+    }
+    updateCompareBar("top10");
+    updateCompareBar("table");
+    document.querySelectorAll(`.cmp-check[data-id="${CSS.escape(id)}"]`).forEach(cb => cb.checked = compareSelection.has(id));
+  }
+  function updateCompareBar(which){
+    const count = els(which + "CompareCount"), btn = els(which + "CompareBtn");
+    if(!count || !btn) return;
+    count.textContent = `${compareSelection.size}/2`;
+    btn.disabled = compareSelection.size !== 2;
+    btn.classList.toggle("ready", compareSelection.size === 2);
+  }
+  // ---------- resumen anual ----------
+  function longestStreak(dates){
+    const uniq = [...new Set(dates)].sort();
+    if(!uniq.length) return 0;
+    let best = 1, cur = 1;
+    for(let i=1;i<uniq.length;i++){
+      const prev = new Date(uniq[i-1]), now = new Date(uniq[i]);
+      const diffDays = Math.round((now-prev)/86400000);
+      cur = diffDays === 1 ? cur+1 : 1;
+      if(cur > best) best = cur;
+    }
+    return best;
+  }
+
+  function renderYearReview(){
+    const list0 = filteredTracks().filter(t => t.date);
+    const years = [...new Set(list0.map(t => t.date.slice(0,4)))].sort((a,b) => b-a);
+    const sel = els("yrYear");
+    const prev = sel.value;
+    sel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("");
+    if(years.includes(prev)) sel.value = prev; else if(years.length) sel.value = years[0];
+
+    const body = els("yrBody");
+    if(!years.length){ body.innerHTML = `<p class="stats-info">${tr("yr_no_routes")}</p>`; return; }
+
+    const year = sel.value;
+    const list = list0.filter(t => t.date.slice(0,4) === year);
+    const km = list.reduce((s,t) => s+t.km, 0);
+    const gain = list.reduce((s,t) => s+t.gain, 0);
+    const withDur = list.filter(t => t.duration);
+    const sec = withDur.reduce((s,t) => s+t.duration, 0);
+    const kmDur = withDur.reduce((s,t) => s+t.km, 0);
+    const vel = sec ? (kmDur/(sec/3600)).toFixed(1) + " km/h" : "—";
+    const idxList = list.map(t => difficultyIndex(t)).filter(v => v != null);
+    const avgIdx = idxList.length ? Math.round(idxList.reduce((a,b) => a+b, 0)/idxList.length) : null;
+
+    const byMonth = new Map();
+    list.forEach(t => { const m = t.date.slice(0,7); byMonth.set(m, (byMonth.get(m)||0) + t.km); });
+    let bestMonth = null, bestMonthKm = -1;
+    byMonth.forEach((v,k) => { if(v > bestMonthKm){ bestMonthKm = v; bestMonth = k; } });
+    const bestMonthLabel = bestMonth
+      ? new Date(+bestMonth.slice(0,4), +bestMonth.slice(5,7)-1, 1).toLocaleDateString(LOC(), { month:"long" })
+      : tr("yr_no_month");
+
+    const streak = longestStreak(list.map(t => t.date));
+    const longest = list.length ? list.reduce((a,b) => b.km > a.km ? b : a) : null;
+    const hardest = idxList.length ? list.filter(t=>difficultyIndex(t)!=null).reduce((a,b) => difficultyIndex(b) > difficultyIndex(a) ? b : a) : null;
+
+    const byType = new Map();
+    list.forEach(t => { const ty = t.type || "Desconocido"; byType.set(ty, (byType.get(ty)||0) + t.km); });
+    const typeRows = [...byType.entries()].sort((a,b) => b[1]-a[1]).map(([ty,tkm]) => {
+      const pct = km ? Math.round(tkm/km*100) : 0;
+      const color = typeColors.get(ty) || "#ff8a69";
+      return `<div class="yr-type-row"><span class="sw" style="background:${color};"></span><span style="width:110px;">${ty}</span>
+        <div class="bar"><div style="width:${pct}%; background:${color};"></div></div><span class="pct">${pct}%</span></div>`;
+    }).join("");
+
+    body.innerHTML = `
+      <div class="yr-hero">
+        <div><div class="yr-num">${Math.round(km).toLocaleString(LOC())}</div><div class="yr-label">${tr("yr_km_total")}</div></div>
+        <div><div class="yr-num">${Math.round(gain).toLocaleString(LOC())}</div><div class="yr-label">${tr("yr_gain_total")}</div></div>
+        <div><div class="yr-num">${list.length}</div><div class="yr-label">${tr("yr_routes")}</div></div>
+      </div>
+      <div class="yr-grid">
+        <div class="yr-card"><div class="yr-card-label">${tr("yr_moving_time")}</div><div class="yr-card-value">${sec ? formatDuration(sec) : "—"}</div></div>
+        <div class="yr-card"><div class="yr-card-label">${tr("yr_avg_speed")}</div><div class="yr-card-value">${vel}</div></div>
+        <div class="yr-card"><div class="yr-card-label">${tr("yr_avg_index")}</div><div class="yr-card-value">${avgIdx != null ? avgIdx : tr("no_index")}</div></div>
+        <div class="yr-card"><div class="yr-card-label">${tr("yr_busiest_month")}</div><div class="yr-card-value" style="text-transform:capitalize;">${bestMonthLabel}</div><div class="yr-card-sub">${Math.round(bestMonthKm)} km</div></div>
+        <div class="yr-card"><div class="yr-card-label">${tr("yr_streak")}</div><div class="yr-card-value">${tr("yr_streak_days", streak)}</div></div>
+        <div class="yr-card"><div class="yr-card-label">${tr("yr_longest_route")}</div><div class="yr-card-value">${longest ? longest.km+" km" : "—"}</div><div class="yr-card-sub">${longest ? longest.name : ""}</div></div>
+        <div class="yr-card"><div class="yr-card-label">${tr("yr_hardest_route")}</div><div class="yr-card-value">${hardest ? difficultyIndex(hardest) : "—"}</div><div class="yr-card-sub">${hardest ? hardest.name : ""}</div></div>
+      </div>
+      <div class="yr-card-label" style="margin-bottom:8px;">${tr("yr_by_type")}</div>
+      <div class="yr-types">${typeRows}</div>
+    `;
+  }
+  function openYearReview(){ els("yearReviewModal").classList.remove("hidden"); renderYearReview(); }
+  function closeYearReview(){ els("yearReviewModal").classList.add("hidden"); }
+  els("btnYearReview").addEventListener("click", openYearReview);
+  els("yrClose").addEventListener("click", closeYearReview);
+  els("yrYear").addEventListener("change", renderYearReview);
+  els("yearReviewModal").addEventListener("click", e => { if(e.target === els("yearReviewModal")) closeYearReview(); });
+  document.addEventListener("keydown", e => { if(e.key === "Escape") closeYearReview(); });
+
+  function openCompare(){
+    if(compareSelection.size !== 2) return;
+    const [idA, idB] = [...compareSelection];
+    const a = tracks.find(t => t.id === idA), b = tracks.find(t => t.id === idB);
+    if(!a || !b) return;
+    closeRecords(); closeTable();
+    renderCompare(a, b);
+    els("compareModal").classList.remove("hidden");
+  }
+  function closeCompare(){ els("compareModal").classList.add("hidden"); }
+
+  function compareStatsLine(t){
+    const vel = t.duration ? (t.km/(t.duration/3600)).toFixed(1) + " km/h" : "—";
+    const tiempo = t.duration ? formatDuration(t.duration) : "—";
+    return `${t.km} km · ${t.gain} m · ${tiempo} · ${vel}`;
+  }
+
+  function renderCompare(a, b){
+    const colorA = "#ff8a69", colorB = "#7fae8e";
+    els("compareInfo").innerHTML = `
+      <div class="cmp-col"><div class="cmp-name"><span class="sw" style="background:${colorA};"></span>${a.name}</div><div style="color:var(--text-dim);">${a.date||"—"} · ${compareStatsLine(a)}</div></div>
+      <div class="cmp-col"><div class="cmp-name"><span class="sw" style="background:${colorB};"></span>${b.name}</div><div style="color:var(--text-dim);">${b.date||"—"} · ${compareStatsLine(b)}</div></div>
+    `;
+    const svg = els("compareSvg");
+    const validA = (a.profile||[]).filter(p=>p.ele!=null), validB = (b.profile||[]).filter(p=>p.ele!=null);
+    if(validA.length < 2 || validB.length < 2){
+      svg.removeAttribute("viewBox");
+      svg.innerHTML = `<text x="10" y="40" fill="#8b95ab" font-size="12">${tr("elev_no_data")}</text>`;
+      return;
+    }
+    const w = 860, h = 280, padL = 46, padR = 14, padT = 14, padB = 22;
+    const maxDa = validA[validA.length-1].km, maxDb = validB[validB.length-1].km;
+    const allEle = [...validA.map(p=>p.ele), ...validB.map(p=>p.ele)];
+    const minE = Math.min(...allEle), maxE = Math.max(...allEle);
+    const spanE = (maxE-minE) || 1;
+    const x = pct => padL + (pct/100) * (w-padL-padR);
+    const y = e => padT + (1-(e-minE)/spanE) * (h-padT-padB);
+    const lineFor = (valid, maxD) => valid.map(p => `${x(maxD?p.km/maxD*100:0).toFixed(1)},${y(p.ele).toFixed(1)}`).join(" ");
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    svg.setAttribute("preserveAspectRatio", "none");
+    svg.innerHTML = `
+      <polyline points="${lineFor(validA,maxDa)}" fill="none" stroke="${colorA}" stroke-width="2.5"></polyline>
+      <polyline points="${lineFor(validB,maxDb)}" fill="none" stroke="${colorB}" stroke-width="2.5"></polyline>
+      <text x="${padL}" y="${h-6}" fill="#8b95ab" font-size="10">0%</text>
+      <text x="${w-padR}" y="${h-6}" fill="#8b95ab" font-size="10" text-anchor="end">100% ${LANG==="en"?"of distance":"de la distancia"}</text>
+      <text x="2" y="${(y(maxE)+4).toFixed(1)}" fill="#8b95ab" font-size="10">${Math.round(maxE)} m</text>
+      <text x="2" y="${(y(minE)+4).toFixed(1)}" fill="#8b95ab" font-size="10">${Math.round(minE)} m</text>
+    `;
+  }
+  els("top10CompareBtn").addEventListener("click", openCompare);
+  els("tableCompareBtn").addEventListener("click", openCompare);
+  els("compareClose").addEventListener("click", closeCompare);
+  els("compareModal").addEventListener("click", e => { if(e.target === els("compareModal")) closeCompare(); });
+  document.addEventListener("keydown", e => { if(e.key === "Escape") closeCompare(); });
+
   function recordCard(label, value, t){
     const card = document.createElement("div");
     card.className = "record-card";
@@ -1228,30 +2134,30 @@ main{ position:relative; flex:1; min-width:0; }
     const grid = els("recordsGrid"), info = els("recordsInfo");
     grid.innerHTML = "";
     if(!list.length){
-      info.textContent = "No hay rutas con los filtros actuales.";
+      info.textContent = tr("no_routes_filters");
       els("top10Table").querySelector("thead").innerHTML = "";
       els("top10Table").querySelector("tbody").innerHTML = "";
       return;
     }
-    info.textContent = `Basado en las ${list.length} rutas que cumplen los filtros actuales.`;
+    info.textContent = tr("based_on_records", list.length);
 
     const maxBy = (arr, fn) => arr.reduce((a,b) => fn(b) > fn(a) ? b : a);
     const masLarga = maxBy(list, t => t.km);
-    grid.appendChild(recordCard("Más larga", masLarga.km + " km", masLarga));
+    grid.appendChild(recordCard(tr("rec_longest"), masLarga.km + " km", masLarga));
     const masDesnivel = maxBy(list, t => t.gain);
-    grid.appendChild(recordCard("Más desnivel", masDesnivel.gain + " m", masDesnivel));
+    grid.appendChild(recordCard(tr("rec_most_gain"), masDesnivel.gain + " m", masDesnivel));
 
     const withSpeed = list.filter(t => t.duration);
     if(withSpeed.length){
       const masRapida = maxBy(withSpeed, t => t.km/(t.duration/3600));
-      grid.appendChild(recordCard("Más rápida (media)", (masRapida.km/(masRapida.duration/3600)).toFixed(1) + " km/h", masRapida));
+      grid.appendChild(recordCard(tr("rec_fastest"), (masRapida.km/(masRapida.duration/3600)).toFixed(1) + " km/h", masRapida));
       const masTiempo = maxBy(withSpeed, t => t.duration);
-      grid.appendChild(recordCard("Más tiempo en movimiento", formatDuration(masTiempo.duration), masTiempo));
+      grid.appendChild(recordCard(tr("rec_most_time"), formatDuration(masTiempo.duration), masTiempo));
     }
     const withIdx = list.map(t => ({ t, idx: difficultyIndex(t) })).filter(x => x.idx != null);
     if(withIdx.length){
       const masDificil = withIdx.reduce((a,b) => b.idx > a.idx ? b : a);
-      grid.appendChild(recordCard("Más difícil (índice)", masDificil.idx, masDificil.t));
+      grid.appendChild(recordCard(tr("rec_hardest"), masDificil.idx, masDificil.t));
     }
     renderTop10();
   }
@@ -1265,23 +2171,27 @@ main{ position:relative; flex:1; min-width:0; }
       .slice(0, 10);
     const table = els("top10Table");
     table.querySelector("thead").innerHTML =
-      `<tr><th>#</th><th>Ruta</th><th>Fecha</th><th>Tipo</th><th class="num">Km</th><th class="num">Desnivel</th><th class="num">Índice</th><th class="num">Vel. media</th></tr>`;
+      `<tr><th></th><th>${tr("col_num")}</th><th>${tr("col_route")}</th><th>${tr("col_date")}</th><th>${tr("col_type")}</th><th class="num">${tr("col_km")}</th><th class="num">${tr("col_gain")}</th><th class="num">${tr("col_idx")}</th><th class="num">${tr("col_speed")}</th></tr>`;
     const tbody = table.querySelector("tbody");
     tbody.innerHTML = "";
     if(!list.length){
-      tbody.innerHTML = '<tr><td colspan="8" style="color:var(--text-dim);">Sin datos suficientes para esta métrica.</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="9" style="color:var(--text-dim);">${tr("not_enough_data")}</td></tr>`;
+      updateCompareBar("top10");
       return;
     }
     list.forEach((x,i) => {
       const t = x.t;
       const idx = difficultyIndex(t);
       const vel = t.duration ? (t.km/(t.duration/3600)).toFixed(1) + " km/h" : "—";
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${i+1}</td><td>${t.name}</td><td>${t.date || "—"}</td><td>${t.type || "Desconocido"}</td>
+      const row = document.createElement("tr");
+      row.innerHTML = `<td><input type="checkbox" class="cmp-check" data-id="${t.id}" ${compareSelection.has(t.id)?"checked":""}></td>
+        <td>${i+1}</td><td>${t.name}</td><td>${t.date || "—"}</td><td>${t.type || "Desconocido"}</td>
         <td class="num">${t.km}</td><td class="num">${t.gain}</td><td class="num">${idx != null ? idx : "—"}</td><td class="num">${vel}</td>`;
-      tr.addEventListener("click", () => focusTrack(t.id));
-      tbody.appendChild(tr);
+      row.querySelector(".cmp-check").addEventListener("click", e => { e.stopPropagation(); toggleCompare(t.id); });
+      row.addEventListener("click", () => focusTrack(t.id));
+      tbody.appendChild(row);
     });
+    updateCompareBar("top10");
   }
 
   function openRecords(){ els("recordsModal").classList.remove("hidden"); renderRecords(); }
@@ -1316,7 +2226,7 @@ main{ position:relative; flex:1; min-width:0; }
 
     const info = els("calInfo"), grid = els("calGrid");
     if(!years.length){
-      info.textContent = "No hay rutas con fecha para mostrar con los filtros actuales.";
+      info.textContent = tr("cal_no_dated");
       grid.innerHTML = "";
       return;
     }
@@ -1343,7 +2253,7 @@ main{ position:relative; flex:1; min-width:0; }
     monthsRow.className = "cal-months";
     const weekdaysCol = document.createElement("div");
     weekdaysCol.className = "cal-weekdays";
-    ["L","","X","","V","",""].forEach(l => { const s2 = document.createElement("span"); s2.textContent = l; weekdaysCol.appendChild(s2); });
+    tr("cal_weekdays").forEach(l => { const s2 = document.createElement("span"); s2.textContent = l; weekdaysCol.appendChild(s2); });
     const dayGrid = document.createElement("div");
     dayGrid.className = "cal-grid";
 
@@ -1358,7 +2268,7 @@ main{ position:relative; flex:1; min-width:0; }
         lastMonth = d.getMonth();
         const label = document.createElement("span");
         label.style.gridColumn = String(thisCol+1);
-        label.textContent = d.toLocaleDateString("es-ES", { month:"short" });
+        label.textContent = d.toLocaleDateString(LOC(), { month:"short" });
         monthsRow.appendChild(label);
       }
       const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
@@ -1368,10 +2278,10 @@ main{ position:relative; flex:1; min-width:0; }
       cell.className = "cal-day lv" + levelOf(km);
       cell.style.gridColumn = String(thisCol+1);
       cell.style.gridRow = String(row+1);
-      const fecha = d.toLocaleDateString("es-ES", { day:"numeric", month:"long", year:"numeric" });
+      const fecha = d.toLocaleDateString(LOC(), { day:"numeric", month:"long", year:"numeric" });
       cell.title = info2
-        ? `${fecha}: ${info2.n} ruta(s), ${Math.round(info2.km*10)/10} km, ${Math.round(info2.gain)} m`
-        : `${fecha}: sin actividad`;
+        ? tr("cal_activity", fecha, info2.n, Math.round(info2.km*10)/10, Math.round(info2.gain))
+        : tr("cal_no_activity", fecha);
       if(info2){ totalKm += info2.km; totalGain += info2.gain; totalN += info2.n; diasActivos++; }
       dayGrid.appendChild(cell);
     }
@@ -1384,9 +2294,8 @@ main{ position:relative; flex:1; min-width:0; }
     body.appendChild(dayGrid);
     grid.appendChild(body);
 
-    info.textContent = `${year}: ${diasActivos} días activos, ${totalN} ruta(s), `
-      + `${Math.round(totalKm).toLocaleString("es-ES")} km, ${Math.round(totalGain).toLocaleString("es-ES")} m de desnivel. `
-      + `El color depende de los km de cada día respecto al día con más km de ese año.`;
+    info.textContent = tr("cal_summary", year, diasActivos, totalN,
+      Math.round(totalKm).toLocaleString(LOC()), Math.round(totalGain).toLocaleString(LOC()));
   }
 
   function openCalendar(){ els("calModal").classList.remove("hidden"); renderCalendar(); }
@@ -1498,7 +2407,7 @@ main{ position:relative; flex:1; min-width:0; }
 
   function renderRepeats(force){
     const info = els("repeatsInfo"), list = els("repeatsList");
-    info.textContent = "Analizando rutas…";
+    info.textContent = tr("repeats_analyzing");
     list.innerHTML = "";
     setTimeout(() => {
       const allGroups = getRepeatGroups(force);
@@ -1508,13 +2417,10 @@ main{ position:relative; flex:1; min-width:0; }
         .filter(g => g.length >= 2);
 
       if(!groups.length){
-        info.textContent = tracks.length
-          ? "No se han encontrado rutas repetidas con los filtros actuales."
-          : "Añade rutas para poder detectar repeticiones.";
+        info.textContent = tracks.length ? tr("repeats_none_filtered") : tr("repeats_add_routes");
         return;
       }
-      info.textContent = `${groups.length} ruta(s) repetida(s) detectada(s) entre las que cumplen los filtros actuales `
-        + `(comparando los recorridos por su forma, no por el nombre).`;
+      info.textContent = tr("repeats_found", groups.length);
 
       groups.forEach(g => {
         const withDur = g.filter(t => t.duration);
@@ -1524,22 +2430,22 @@ main{ position:relative; flex:1; min-width:0; }
         card.className = "repeat-group";
         const head = document.createElement("div");
         head.className = "repeat-group-head";
-        head.innerHTML = `<h4>${g[0].name}</h4><span>${g.length} veces · ${g[0].date || "?"} → ${g[g.length-1].date || "?"}</span>`;
+        head.innerHTML = `<h4>${g[0].name}</h4><span>${tr("repeats_times", g.length, g[0].date || "?", g[g.length-1].date || "?")}</span>`;
         card.appendChild(head);
 
         const table = document.createElement("table");
         table.className = "repeat-table";
-        table.innerHTML = `<thead><tr><th>Fecha</th><th>Tipo</th><th class="num">Km</th><th class="num">Desnivel</th><th class="num">Tiempo mov.</th><th class="num">Vel. media</th></tr></thead>`;
+        table.innerHTML = `<thead><tr><th>${tr("col_date")}</th><th>${tr("col_type")}</th><th class="num">${tr("col_km")}</th><th class="num">${tr("col_gain")}</th><th class="num">${tr("col_time")}</th><th class="num">${tr("col_speed")}</th></tr></thead>`;
         const tbody = document.createElement("tbody");
         g.forEach(t => {
           const vel = t.duration ? (t.km/(t.duration/3600)).toFixed(1) + " km/h" : "—";
           const tiempo = t.duration ? formatDuration(t.duration) : "—";
-          const tr = document.createElement("tr");
-          if(t.id === bestId) tr.className = "best";
-          tr.innerHTML = `<td>${t.date || "—"}</td><td>${t.type || "Desconocido"}</td>
+          const row = document.createElement("tr");
+          if(t.id === bestId) row.className = "best";
+          row.innerHTML = `<td>${t.date || "—"}</td><td>${t.type || "Desconocido"}</td>
             <td class="num">${t.km}</td><td class="num">${t.gain}</td><td class="num">${tiempo}</td><td class="num">${vel}</td>`;
-          tr.addEventListener("click", () => focusTrack(t.id));
-          tbody.appendChild(tr);
+          row.addEventListener("click", () => focusTrack(t.id));
+          tbody.appendChild(row);
         });
         table.appendChild(tbody);
         card.appendChild(table);
@@ -1556,9 +2462,100 @@ main{ position:relative; flex:1; min-width:0; }
   els("repeatsModal").addEventListener("click", e => { if(e.target === els("repeatsModal")) closeRepeats(); });
   document.addEventListener("keydown", e => { if(e.key === "Escape") closeRepeats(); });
 
+  // ---------- tabla de rutas ----------
+  const tableCols = [
+    { key:"name",     i18n:"col_route" },
+    { key:"date",     i18n:"col_date" },
+    { key:"type",     i18n:"col_type" },
+    { key:"km",       i18n:"col_km", num:true },
+    { key:"gain",     i18n:"col_gain", num:true },
+    { key:"duration", i18n:"col_time", num:true },
+    { key:"speed",    i18n:"col_speed", num:true },
+    { key:"idx",      i18n:"col_idx", num:true },
+  ];
+  let tableSort = { key:"date", dir:-1 };
+  let tablePage = 0;
+  const TABLE_PAGE_SIZE = 50;
+
+  function tableRowValue(t, key){
+    if(key === "speed") return t.duration ? t.km/(t.duration/3600) : null;
+    if(key === "idx") return difficultyIndex(t);
+    if(key === "type") return t.type || "Desconocido";
+    return t[key];
+  }
+  function tableFormat(v, key){
+    if(v == null || v === "") return "—";
+    if(key === "km") return v.toFixed(1);
+    if(key === "gain") return Math.round(v);
+    if(key === "duration") return formatDuration(v);
+    if(key === "speed") return v.toFixed(1) + " km/h";
+    return v;
+  }
+
+  function renderTable(){
+    const list = filteredTracks();
+    const info = els("tableInfo");
+    info.textContent = tr("table_count", list.length);
+
+    const sorted = list.slice().sort((a,b) => {
+      let va = tableRowValue(a, tableSort.key), vb = tableRowValue(b, tableSort.key);
+      if(va == null && vb == null) return 0;
+      if(va == null) return 1;
+      if(vb == null) return -1;
+      if(typeof va === "string") return va.localeCompare(vb) * tableSort.dir;
+      return (va - vb) * tableSort.dir;
+    });
+
+    const totalPages = Math.max(1, Math.ceil(sorted.length / TABLE_PAGE_SIZE));
+    tablePage = Math.min(tablePage, totalPages - 1);
+    const pageRows = sorted.slice(tablePage*TABLE_PAGE_SIZE, (tablePage+1)*TABLE_PAGE_SIZE);
+
+    const table = els("dataTable");
+    const thead = table.querySelector("thead"), tbody = table.querySelector("tbody");
+    thead.innerHTML = "<tr><th></th>" + tableCols.map(c => {
+      const arrow = tableSort.key === c.key ? `<span class="arrow">${tableSort.dir === 1 ? "▲" : "▼"}</span>` : "";
+      return `<th class="${c.num ? "num" : ""}" data-key="${c.key}">${tr(c.i18n)}${arrow}</th>`;
+    }).join("") + "</tr>";
+    tbody.innerHTML = "";
+    pageRows.forEach(t => {
+      const row = document.createElement("tr");
+      row.innerHTML = `<td><input type="checkbox" class="cmp-check" data-id="${t.id}" ${compareSelection.has(t.id)?"checked":""}></td>` + tableCols.map(c => {
+        const v = tableRowValue(t, c.key);
+        return `<td class="${c.num ? "num" : ""}">${tableFormat(v, c.key)}</td>`;
+      }).join("");
+      row.querySelector(".cmp-check").addEventListener("click", e => { e.stopPropagation(); toggleCompare(t.id); });
+      row.addEventListener("click", () => focusTrack(t.id));
+      tbody.appendChild(row);
+    });
+
+    els("tablePageInfo").textContent = sorted.length ? tr("table_page", tablePage+1, totalPages) : tr("table_no_routes");
+    els("tablePrev").disabled = tablePage <= 0;
+    els("tableNext").disabled = tablePage >= totalPages - 1;
+    updateCompareBar("table");
+  }
+
+  function openTable(){ tablePage = 0; els("tableModal").classList.remove("hidden"); renderTable(); }
+  function closeTable(){ els("tableModal").classList.add("hidden"); }
+  els("btnTable").addEventListener("click", openTable);
+  els("tableClose").addEventListener("click", closeTable);
+  els("tableModal").addEventListener("click", e => { if(e.target === els("tableModal")) closeTable(); });
+  document.addEventListener("keydown", e => { if(e.key === "Escape") closeTable(); });
+  els("dataTable").addEventListener("click", e => {
+    const th = e.target.closest("th");
+    if(!th) return;
+    const key = th.dataset.key;
+    if(tableSort.key === key) tableSort.dir *= -1;
+    else { tableSort.key = key; tableSort.dir = 1; }
+    tablePage = 0;
+    renderTable();
+  });
+  els("tablePrev").addEventListener("click", () => { tablePage--; renderTable(); });
+  els("tableNext").addEventListener("click", () => { tablePage++; renderTable(); });
+
   // ---------- arranque ----------
   (async function init(){
-    showLoading("Cargando rutas guardadas…");
+    applyI18n();
+    showLoading(tr("loading_saved_routes"));
     try{ tracks = await dbGetAll(); }catch(e){ tracks = []; }
     rebuildFilterLists();
     applyFiltersAndRedraw();
