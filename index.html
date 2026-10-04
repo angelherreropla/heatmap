@@ -83,6 +83,13 @@ main{ position:relative; flex:1; min-width:0; }
 .menu-item:hover{ background:var(--panel); }
 .menu-item.danger{ color:var(--danger); }
 .menu-sep{ border:none; border-top:1px solid var(--line); margin:4px 2px; }
+.surf-bar{ display:flex; height:8px; border-radius:4px; overflow:hidden; margin:6px 0 3px; background:var(--line); }
+.surf-bar span{ display:block; height:100%; }
+.surf-legend{ font-size:12px; color:var(--text-dim); }
+.surf-legend i{ display:inline-block; width:8px; height:8px; border-radius:2px; margin:0 3px 0 6px; vertical-align:middle; }
+.surf-legend i:first-child{ margin-left:0; }
+.surf-status{ position:fixed; left:50%; top:74px; transform:translateX(-50%); z-index:1500; background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:10px 14px; display:flex; align-items:center; gap:12px; font-size:13px; box-shadow:0 10px 28px rgba(0,0,0,.45); max-width:calc(100vw - 32px); }
+.surf-status button{ padding:5px 10px; font-size:12px; }
 .lang-btn{ padding:6px 9px; line-height:1; opacity:.5; display:inline-flex; align-items:center; }
 .lang-btn svg{ display:block; border-radius:2px; }
 .lang-btn.lang-active{ opacity:1; border-color:var(--accent-2); background:var(--panel-2); }
@@ -135,6 +142,11 @@ main{ position:relative; flex:1; min-width:0; }
 .top10-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
 .top10-table th, .top10-table td{ padding:6px 8px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
 .top10-table td.num, .top10-table th.num{ text-align:right; }
+.top10-table th{ color:var(--text-dim); font-weight:600; user-select:none; }
+.top10-table th[data-key]{ cursor:pointer; }
+.top10-table th[data-key]:hover{ color:var(--text); }
+.top10-table th .arrow{ color:var(--accent); margin-left:3px; }
+.top10-hint{ font-size:12px; color:var(--text-dim); }
 .top10-table tbody tr{ cursor:pointer; }
 .top10-table tbody tr:hover{ background:var(--panel-2); }
 .cal-modal{ width:min(1080px, 94vw); max-height:90vh; overflow-y:auto; }
@@ -163,10 +175,17 @@ main{ position:relative; flex:1; min-width:0; }
 .repeat-table tbody tr{ cursor:pointer; }
 .repeat-table tbody tr:hover{ background:var(--panel-2); }
 .repeat-table tr.best td{ color:var(--accent); font-weight:600; }
-.table-modal{ width:min(1000px, 94vw); max-height:90vh; overflow-y:auto; }
-.table-wrap{ overflow-x:auto; }
-.data-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
-.data-table th, .data-table td{ padding:6px 8px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
+.table-modal{ width:min(1120px, 96vw); max-height:90vh; overflow-y:auto; }
+.table-wrap{ overflow-x:hidden; }
+.data-table{ width:100%; border-collapse:collapse; font-size:12.5px; table-layout:fixed; }
+.data-table th, .data-table td{ padding:6px 5px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.data-table th{ white-space:normal; line-height:1.25; vertical-align:bottom; overflow-wrap:anywhere; }
+.data-table th.c-check{ width:26px; }
+.data-table th.c-name{ width:220px; }
+.data-table th.c-date{ width:82px; }
+@media (max-width:1100px){ .data-table th.c-name{ width:160px; } }
+@media (max-width:900px){ .data-table th.c-name{ width:120px; } .data-table{ font-size:11.5px; } .data-table th.c-date{ width:74px; } }
+.cell-tip{ position:fixed; z-index:3000; max-width:360px; padding:4px 8px; font-size:12px; line-height:1.35; background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:6px; box-shadow:0 6px 18px rgba(0,0,0,.45); pointer-events:none; white-space:normal; }
 .data-table th.num, .data-table td.num{ text-align:right; }
 .data-table th{ cursor:pointer; color:var(--text-dim); font-weight:600; user-select:none; }
 .data-table th:hover{ color:var(--text); }
@@ -215,6 +234,8 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
           <button class="menu-item" id="btnExport" data-i18n="export_csv">Exportar a CSV</button>
           <button class="menu-item" id="btnBackup" data-i18n="backup_download">Descargar copia de seguridad</button>
           <button class="menu-item" id="btnRestore" data-i18n="backup_restore">Restaurar copia de seguridad</button>
+          <hr class="menu-sep">
+          <button class="menu-item" id="btnSurfAll" data-i18n="surf_analyze_all">Analizar terreno (rutas filtradas)</button>
           <hr class="menu-sep">
           <button class="menu-item danger" id="btnClearAll" data-i18n="clear_all">Vaciar todos los datos</button>
         </div>
@@ -285,7 +306,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
           <button class="ghost" id="elevClose">✕</button>
         </div>
         <p id="elevSlope" class="stats-info" style="margin:0 0 4px;"></p>
-        <svg id="elevSvg" width="100%" height="110"></svg>
+        <svg id="elevSvg" width="100%" height="116"></svg>
         <div id="elevTooltip" class="elev-tooltip hidden"></div>
         <div id="elevLegend" class="elev-legend"></div>
       </div>
@@ -295,6 +316,12 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
         <button class="primary" id="btnAddEmpty" data-i18n="empty_btn">Seleccionar archivos GPX</button>
       </div>
     </main>
+  </div>
+  <div class="surf-status hidden" id="surfStatus">
+    <div class="spinner" id="surfSpinner"></div>
+    <span id="surfStatusText"></span>
+    <button class="ghost" id="surfStop" data-i18n="surf_stop">Detener</button>
+    <button class="ghost hidden" id="surfClose" data-i18n="surf_close">Cerrar</button>
   </div>
   <div class="modal-overlay hidden" id="loadingOverlay">
     <div class="modal" style="display:flex; align-items:center; gap:14px; width:auto;">
@@ -384,15 +411,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       <div class="records-grid" id="recordsGrid"></div>
       <div class="top10-head">
         <h4 style="margin:14px 0 8px;" data-i18n="top10_title">Top 10</h4>
-        <label><span data-i18n="sort_by">Ordenar por</span>
-          <select id="top10Metric">
-            <option value="km" data-i18n="opt_distance">Distancia</option>
-            <option value="gain" data-i18n="opt_gain">Desnivel</option>
-            <option value="idx" data-i18n="opt_idx">Índice de dificultad</option>
-            <option value="speed" data-i18n="opt_speed">Velocidad media</option>
-            <option value="duration" data-i18n="opt_duration">Tiempo en movimiento</option>
-          </select>
-        </label>
+        <span class="top10-hint" data-i18n="top10_hint">Pulsa en el título de una columna para ordenar</span>
       </div>
       <div class="compare-bar" id="top10CompareBar">
         <span id="top10CompareCount"></span>
@@ -449,12 +468,19 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   "use strict";
 
   // ---------- IndexedDB ----------
-  const DB_NAME = "gpx-heatmap", STORE = "tracks";
+  // "tracks": las rutas. "surfaces": copia aparte de los análisis de terreno (clave = archivo|km),
+  // que sobrevive a "Vaciar todos los datos" para no tener que volver a consultar OpenStreetMap.
+  const DB_NAME = "gpx-heatmap", STORE = "tracks", SURF_STORE = "surfaces";
   function openDB(){
     return new Promise((res, rej) => {
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = () => req.result.createObjectStore(STORE, { keyPath: "id" });
-      req.onsuccess = () => res(req.result);
+      const req = indexedDB.open(DB_NAME, 2);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: "id" });
+        if(!db.objectStoreNames.contains(SURF_STORE)) db.createObjectStore(SURF_STORE, { keyPath: "key" });
+      };
+      req.onblocked = () => alert(tr("alert_db_blocked"));
+      req.onsuccess = () => { const db = req.result; db.onversionchange = () => db.close(); res(db); };
       req.onerror = () => rej(req.error);
     });
   }
@@ -482,6 +508,41 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       tx.objectStore(STORE).clear();
       tx.oncomplete = res; tx.onerror = () => rej(tx.error);
     });
+  }
+  const surfKey = t => (t.fileName || t.id) + "|" + t.km;
+  async function surfCachePut(list){
+    const items = list.filter(t => t.surface).map(t => ({ key: surfKey(t), surface: t.surface }));
+    if(!items.length) return;
+    const db = await openDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(SURF_STORE, "readwrite");
+      items.forEach(it => tx.objectStore(SURF_STORE).put(it));
+      tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+    });
+  }
+  async function surfCacheGetAll(){
+    const db = await openDB();
+    return new Promise((res, rej) => {
+      const req = db.transaction(SURF_STORE, "readonly").objectStore(SURF_STORE).getAll();
+      req.onsuccess = () => res(new Map((req.result || []).map(it => [it.key, it.surface])));
+      req.onerror = () => rej(req.error);
+    });
+  }
+  async function surfCacheClear(){
+    const db = await openDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(SURF_STORE, "readwrite");
+      tx.objectStore(SURF_STORE).clear();
+      tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+    });
+  }
+  // Rellena el terreno de las rutas que no lo tienen a partir de la copia aparte. Devuelve las que ha rellenado.
+  async function fillSurfacesFromCache(list){
+    let cache;
+    try{ cache = await surfCacheGetAll(); }catch(e){ return []; }
+    const filled = [];
+    list.forEach(t => { if(!t.surface && cache.has(surfKey(t))){ t.surface = cache.get(surfKey(t)); filled.push(t); } });
+    return filled;
   }
   async function dbDelete(id){
     const db = await openDB();
@@ -546,11 +607,20 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       based_on_records: (n) => `Basado en las ${n} rutas que cumplen los filtros actuales.`,
       rec_longest: "Más larga", rec_most_gain: "Más desnivel", rec_fastest: "Más rápida (media)",
       rec_most_time: "Más tiempo en movimiento", rec_hardest: "Más difícil (índice)",
-      top10_title: "Top 10", sort_by: "Ordenar por",
+      top10_title: "Top 10", sort_by: "Ordenar por", top10_hint: "Pulsa en el título de una columna para ordenar (otra vez para invertir)",
       opt_distance: "Distancia", opt_gain: "Desnivel", opt_idx: "Índice de dificultad",
       opt_speed: "Velocidad media", opt_duration: "Tiempo en movimiento",
       col_num: "#", col_route: "Ruta", col_date: "Fecha", col_type: "Tipo", col_km: "Km",
-      col_gain: "Desnivel", col_idx: "Índice", col_speed: "Vel. media", col_time: "Tiempo mov.",
+      col_gain: "Desnivel", col_idx: "Índice", col_idr: "IDR", idr_label: "IDR (percentil en la selección)",
+      col_s_asf: "% Asfalto", col_s_pis: "% Pista", col_s_sen: "% Senda",
+      surf_label: "Terreno", surf_reanalyze_hint: "Pulsa \"Reanalizar\" en el popup para ver el terreno sobre el perfil.", surf_asphalt: "Asfalto", surf_track: "Pista", surf_path: "Senda", surf_nodata: "Sin datos",
+      surf_analyze: "Analizar terreno", surf_reanalyze: "Reanalizar", surf_analyzing: "Analizando terreno…",
+      surf_analyze_all: "Analizar terreno (rutas filtradas)", surf_stop: "Detener", surf_close: "Cerrar",
+      surf_error: "No se ha podido analizar el terreno (el servidor de OpenStreetMap no responde o no hay conexión). Prueba más tarde.",
+      surf_none_pending: "Todas las rutas que cumplen los filtros ya tienen el terreno analizado.",
+      surf_confirm_all: (n, min) => `Se analizará el terreno de ${n} ruta(s) que cumplen los filtros y aún no lo tienen, consultando OpenStreetMap (Overpass). Puede tardar aprox. ${min} min, o bastante más si el servidor está saturado (las primeras rutas de cada zona son las más lentas; luego se reutilizan los caminos ya descargados). Puedes seguir usando la app y detenerlo cuando quieras. ¿Continuar?`,
+      surf_progress: (i, n, nombre) => `Analizando terreno ${i} de ${n}: ${nombre}`,
+      surf_done: (ok, fail, stopped) => `${stopped ? "Detenido" : "Terminado"}: ${ok} ruta(s) analizada(s)${fail ? `, ${fail} con error (vuelve a intentarlo más tarde)` : ""}.`, col_speed: "Vel. media", col_time: "Tiempo mov.",
       not_enough_data: "Sin datos suficientes para esta métrica.",
       cal_title: "Calendario de actividad",
       cal_less: "Menos", cal_more: "Más",
@@ -582,7 +652,10 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       alert_no_routes_yet: "No hay rutas guardadas todavía.",
       confirm_restore: (n) => `Se van a añadir o actualizar ${n} ruta(s) desde la copia de seguridad. Las que ya tengas con el mismo nombre de archivo se sobrescribirán; el resto de tus rutas actuales no se tocan. ¿Continuar?`,
       alert_backup_unreadable: "No se ha podido leer ese archivo como copia de seguridad.",
+      alert_db_blocked: "Hay otra pestaña con una versión anterior de esta app abierta. Ciérrala para que esta pueda actualizar sus datos guardados.",
       confirm_clear_all: "Esto borra todas las rutas cargadas en este navegador. ¿Continuar?",
+      confirm_clear_surf_note: n => `${n} ruta(s) tienen el terreno analizado. A continuación podrás elegir si conservas esos análisis para recuperarlos al volver a cargar los mismos GPX.`,
+      confirm_clear_surf_cache: n => `¿Borrar también los ${n} análisis de terreno guardados?\n\n· Cancelar (recomendado): se conservan y se recuperarán solos al volver a cargar los mismos GPX.\n· Aceptar: se borran y habría que volver a consultar OpenStreetMap.`,
       loading_reading_gpx: (n) => `Leyendo ${n} archivo(s) GPX…`,
       loading_saving_routes: "Guardando rutas…",
       loading_reading_backup: "Leyendo copia de seguridad…",
@@ -650,11 +723,20 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       based_on_records: (n) => `Based on the ${n} routes matching the current filters.`,
       rec_longest: "Longest", rec_most_gain: "Most elevation gain", rec_fastest: "Fastest (average)",
       rec_most_time: "Most moving time", rec_hardest: "Hardest (index)",
-      top10_title: "Top 10", sort_by: "Sort by",
+      top10_title: "Top 10", sort_by: "Sort by", top10_hint: "Click a column title to sort (again to reverse)",
       opt_distance: "Distance", opt_gain: "Elevation gain", opt_idx: "Difficulty index",
       opt_speed: "Average speed", opt_duration: "Moving time",
       col_num: "#", col_route: "Route", col_date: "Date", col_type: "Type", col_km: "Km",
-      col_gain: "Gain", col_idx: "Index", col_speed: "Avg. speed", col_time: "Moving time",
+      col_gain: "Gain", col_idx: "Index", col_idr: "RDI", idr_label: "RDI (percentile in selection)",
+      col_s_asf: "% Paved", col_s_pis: "% Track", col_s_sen: "% Trail",
+      surf_label: "Terrain", surf_reanalyze_hint: "Click \"Re-analyze\" in the popup to see the terrain on the profile.", surf_asphalt: "Paved", surf_track: "Track", surf_path: "Trail", surf_nodata: "No data",
+      surf_analyze: "Analyze terrain", surf_reanalyze: "Re-analyze", surf_analyzing: "Analyzing terrain…",
+      surf_analyze_all: "Analyze terrain (filtered routes)", surf_stop: "Stop", surf_close: "Close",
+      surf_error: "The terrain could not be analyzed (the OpenStreetMap server is not responding or you are offline). Try again later.",
+      surf_none_pending: "All routes matching the filters already have their terrain analyzed.",
+      surf_confirm_all: (n, min) => `The terrain of ${n} route(s) matching the filters that don't have it yet will be analyzed by querying OpenStreetMap (Overpass). It may take approx. ${min} min, or much longer if the server is busy (the first routes in each area are the slowest; after that, already downloaded ways are reused). You can keep using the app and stop it at any time. Continue?`,
+      surf_progress: (i, n, nombre) => `Analyzing terrain ${i} of ${n}: ${nombre}`,
+      surf_done: (ok, fail, stopped) => `${stopped ? "Stopped" : "Done"}: ${ok} route(s) analyzed${fail ? `, ${fail} failed (try again later)` : ""}.`, col_speed: "Avg. speed", col_time: "Moving time",
       not_enough_data: "Not enough data for this metric.",
       cal_title: "Activity calendar",
       cal_less: "Less", cal_more: "More",
@@ -686,7 +768,10 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       alert_no_routes_yet: "No routes saved yet.",
       confirm_restore: (n) => `${n} route(s) from the backup will be added or updated. Ones you already have with the same file name will be overwritten; the rest of your current routes are untouched. Continue?`,
       alert_backup_unreadable: "That file could not be read as a backup.",
+      alert_db_blocked: "Another tab with an older version of this app is open. Close it so this one can update its saved data.",
       confirm_clear_all: "This deletes all routes loaded in this browser. Continue?",
+      confirm_clear_surf_note: n => `${n} route(s) have their terrain analyzed. Next you can choose to keep those analyses so they come back when you load the same GPX files again.`,
+      confirm_clear_surf_cache: n => `Also delete the ${n} saved terrain analyses?\n\n· Cancel (recommended): they are kept and come back automatically when you load the same GPX files again.\n· OK: they are deleted and OpenStreetMap would have to be queried again.`,
       loading_reading_gpx: (n) => `Reading ${n} GPX file(s)…`,
       loading_saving_routes: "Saving routes…",
       loading_reading_backup: "Reading backup…",
@@ -865,7 +950,16 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
 
       const stem = file.name.replace(/\.gpx$/i, "");
       const m = stem.match(/^(\d{4})_(\d{2})_(\d{2})_(.+)$/);
-      const name = m ? m[4] : stem;
+      // Nombre de la ruta: etiqueta <name> del track (o de <metadata>); si no hay, el nombre del archivo.
+      const trkEl = doc.getElementsByTagName("trk")[0];
+      const metaEl = doc.getElementsByTagName("metadata")[0];
+      const nameFrom = el => {
+        if(!el) return "";
+        const n = [...el.children].find(c => c.localName === "name");
+        return n ? n.textContent.trim() : "";
+      };
+      const gpxName = nameFrom(trkEl) || nameFrom(metaEl);
+      const name = gpxName || (m ? m[4] : stem);
 
       let year = null, date = null;
       const tRef = pts.find(p => p.time);
@@ -887,6 +981,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
 
       return {
         id: file.name,
+        fileName: file.name,
         name, date, year,
         km: Math.round(km*10)/10,
         gain: Math.round(gain),
@@ -983,6 +1078,241 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       + `<option value="__new__">${tr("new_type")}</option>`;
   }
 
+  // ---------- análisis de terreno (OpenStreetMap / Overpass) ----------
+  // Ajusta la traza a los caminos de OSM y suma los km por tipo: asfalto, pista, senda o sin datos.
+  // El resultado se guarda en la propia ruta (t.surface), así que entra en la copia de seguridad.
+  const SURF_COLORS = { asfalto:"#9aa5b1", pista:"#d39b4a", senda:"#5fbf6b", sinDatos:"#5d6e66" };
+  // Tipo de terreno en un km concreto del perfil (null si la ruta no tiene tramos guardados).
+  function terrainAt(t, km, totalKm){
+    const runs = t.surface && t.surface.runs;
+    if(!runs || !runs.length || !totalKm) return null;
+    const f = km / totalKm;
+    let c = runs[0][1];
+    for(const r of runs){ if(r[0] <= f) c = r[1]; else break; }
+    return c;
+  }
+  const SURF_KEYS = ["asfalto","pista","senda","sinDatos"];
+  const SURF_I18N = { asfalto:"surf_asphalt", pista:"surf_track", senda:"surf_path", sinDatos:"surf_nodata" };
+  const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
+  const PAVED = /^(asphalt|paved|concrete|concrete:plates|concrete:lanes|paving_stones|sett|chipseal|metal|wood|bricks)$/;
+  const UNPAVED = /^(unpaved|gravel|fine_gravel|compacted|dirt|earth|ground|grass|sand|mud|rock|pebblestone|woodchips|grass_paver)$/;
+  const ROADS = /^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service|road|busway)(_link)?$/;
+  const IGNORE_HW = /^(proposed|construction|abandoned|razed|platform|corridor|elevator|bus_stop|rest_area|services)$/;
+
+  function surfaceClass(tags){
+    const h = tags.highway || "", sf = tags.surface || "";
+    if(PAVED.test(sf)) return "asfalto";
+    if(h === "track") return "pista";
+    if(h === "path" || h === "bridleway") return "senda";
+    if(h === "footway" || h === "steps" || h === "pedestrian") return UNPAVED.test(sf) ? "senda" : "asfalto";
+    if(h === "cycleway" || ROADS.test(h)) return UNPAVED.test(sf) ? "pista" : "asfalto";
+    return null;
+  }
+
+  function densifyPts(pts, stepM = 15){
+    const out = [pts[0]];
+    for(let i=1;i<pts.length;i++){
+      const [a,b] = pts[i-1], [c,d] = pts[i];
+      const dist = Math.hypot((d-b)*111320*Math.cos(a*Math.PI/180), (c-a)*110540);
+      const n = Math.floor(dist/stepM);
+      for(let k=1;k<=n;k++){ const f = k/(n+1); out.push([a+(c-a)*f, b+(d-b)*f]); }
+      out.push(pts[i]);
+    }
+    return out;
+  }
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  // Consulta a Overpass con reintentos. Si el servidor dice que hay que esperar (429), se mira en
+  // /api/status cuántos segundos faltan para tener turno; si está saturado (504), se espera cada vez más.
+  async function overpassWaitSeconds(){
+    try{
+      const st = await fetch(OVERPASS_URL.replace("/interpreter", "/status")).then(r => r.text());
+      if(/slots? available now/.test(st) && !/^0 slots/m.test(st)) return 0;
+      const m = st.match(/in (\d+) seconds/);
+      return m ? parseInt(m[1],10) : null;
+    }catch(e){ return null; }
+  }
+  async function overpassQuery(q){
+    const waits = [5, 15, 30, 60, 90];
+    for(let i=0;;i++){
+      let status = 0;
+      try{
+        const r = await fetch(OVERPASS_URL + "?data=" + encodeURIComponent(q));
+        status = r.status;
+        if(r.ok){
+          const data = await r.json();
+          if(data.remark && /error|timed out/i.test(data.remark)) status = 504; else return data;
+        } else if(!(r.status === 429 || r.status >= 500)) throw new Error("Overpass " + r.status);
+      }catch(e){
+        if(String(e.message).startsWith("Overpass")) throw e;
+      }
+      if(i >= waits.length) throw new Error("Overpass " + (status || "sin conexión"));
+      let w = waits[i];
+      if(status === 429){ const ws = await overpassWaitSeconds(); if(ws != null) w = ws + 2; }
+      await sleep(w * 1000);
+    }
+  }
+
+  // Los caminos se piden por teselas fijas de ~3 x 3 km. Se guardan en memoria durante la sesión,
+  // así que rutas por la misma zona (lo habitual) reutilizan las teselas ya descargadas.
+  const TILE_LAT = 0.03, TILE_LON = 0.04, TILE_CACHE_MAX = 60;
+  const tileCache = new Map();
+  async function waysForTile(key){
+    if(tileCache.has(key)){ const v = tileCache.get(key); tileCache.delete(key); tileCache.set(key, v); return v; }
+    const [ty, tx] = key.split(",").map(Number);
+    const s = ty*TILE_LAT, w = tx*TILE_LON, n = s+TILE_LAT, e = w+TILE_LON;
+    const q = `[out:json][timeout:60];way["highway"](${s.toFixed(4)},${w.toFixed(4)},${n.toFixed(4)},${e.toFixed(4)});out tags geom;`;
+    const data = await overpassQuery(q);
+    const ways = data.elements.filter(el => el.geometry && !IGNORE_HW.test(el.tags.highway || ""));
+    tileCache.set(key, ways);
+    if(tileCache.size > TILE_CACHE_MAX) tileCache.delete(tileCache.keys().next().value);
+    return ways;
+  }
+
+  async function analyzeSurface(t){
+    const base = (t.profile && t.profile.length >= 2 && t.profile[0].lat != null)
+      ? t.profile.map(p => [p.lat, p.lon]) : t.pts;
+    const pts = densifyPts(base, 15);
+    // Teselas que toca la ruta (con un margen de ~30 m para no perder caminos junto al borde).
+    const tiles = new Set(), M = 0.0003;
+    pts.forEach(([la,lo]) => {
+      for(const dla of [-M, M]) for(const dlo of [-M, M])
+        tiles.add(Math.floor((la+dla)/TILE_LAT) + "," + Math.floor((lo+dlo)/TILE_LON));
+    });
+    const waysById = new Map();
+    for(const key of tiles){
+      const cached = tileCache.has(key);
+      (await waysForTile(key)).forEach(el => waysById.set(el.id, el));
+      if(!cached) await sleep(1000);
+    }
+    const ways = [...waysById.values()];
+
+    // Proyección plana local (metros) + rejilla de 50 m para buscar segmentos cercanos.
+    let s0 = 90, w0 = 180, latSum = 0;
+    pts.forEach(([la,lo]) => { s0 = Math.min(s0,la); w0 = Math.min(w0,lo); latSum += la; });
+    const kx = 111320*Math.cos((latSum/pts.length)*Math.PI/180), ky = 110540;
+    const P = (la,lo) => [(lo-w0+0.01)*kx, (la-s0+0.01)*ky];
+    const G = 50, grid = new Map(), segs = [];
+    ways.forEach((way, wi) => {
+      const g = way.geometry.map(q => P(q.lat, q.lon));
+      for(let i=0;i<g.length-1;i++){
+        const si = segs.length; segs.push([g[i], g[i+1], wi]);
+        const x0 = Math.floor(Math.min(g[i][0],g[i+1][0])/G), x1 = Math.floor(Math.max(g[i][0],g[i+1][0])/G);
+        const y0 = Math.floor(Math.min(g[i][1],g[i+1][1])/G), y1 = Math.floor(Math.max(g[i][1],g[i+1][1])/G);
+        for(let x=x0;x<=x1;x++) for(let y=y0;y<=y1;y++){
+          const k = x+","+y; let arr = grid.get(k); if(!arr) grid.set(k, arr = []); arr.push(si);
+        }
+      }
+    });
+    const distSeg = (p,a,b) => {
+      const dx=b[0]-a[0], dy=b[1]-a[1], L=dx*dx+dy*dy;
+      let u = L ? ((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L : 0; u = Math.max(0, Math.min(1, u));
+      return Math.hypot(p[0]-a[0]-u*dx, p[1]-a[1]-u*dy);
+    };
+    // Cada punto se asigna al camino más cercano (máx. 25 m), con preferencia por seguir en el mismo camino.
+    const TH = 25; let prev = -1; const asign = [];
+    const proj = pts.map(([la,lo]) => P(la,lo));
+    proj.forEach(p => {
+      const gx = Math.floor(p[0]/G), gy = Math.floor(p[1]/G);
+      let best = -1, bd = Infinity, dPrev = Infinity;
+      for(let x=gx-1;x<=gx+1;x++) for(let y=gy-1;y<=gy+1;y++){
+        (grid.get(x+","+y) || []).forEach(si => {
+          const d = distSeg(p, segs[si][0], segs[si][1]), wi = segs[si][2];
+          if(d < bd){ bd = d; best = wi; }
+          if(wi === prev && d < dPrev) dPrev = d;
+        });
+      }
+      if(prev >= 0 && dPrev <= TH && dPrev <= bd + 6){ best = prev; bd = dPrev; }
+      if(bd > TH) best = -1;
+      asign.push(best); prev = best;
+    });
+    const cls0 = asign.map(wi => wi < 0 ? "sinDatos" : (surfaceClass(ways[wi].tags) || "sinDatos"));
+    // Suavizado por mayoría (ventana de 7 puntos) para quitar saltos sueltos en cruces.
+    const cls = cls0.map((c,i) => {
+      const cnt = {};
+      for(let j=Math.max(0,i-3); j<=Math.min(cls0.length-1,i+3); j++) cnt[cls0[j]] = (cnt[cls0[j]]||0) + 1;
+      return Object.entries(cnt).sort((a,b) => b[1]-a[1])[0][0];
+    });
+    const km = { asfalto:0, pista:0, senda:0, sinDatos:0 }, sup = {};
+    // Tramos a lo largo de la ruta: [inicio como fracción de la distancia total (0-1), tipo].
+    const runsAbs = []; let acc = 0;
+    for(let i=0;i<proj.length-1;i++){
+      const d = Math.hypot(proj[i+1][0]-proj[i][0], proj[i+1][1]-proj[i][1]) / 1000;
+      if(!runsAbs.length || runsAbs[runsAbs.length-1][1] !== cls[i]) runsAbs.push([acc, cls[i]]);
+      acc += d;
+      km[cls[i]] += d;
+      const sf = asign[i] < 0 ? "-" : (ways[asign[i]].tags.surface || "?");
+      sup[sf] = (sup[sf] || 0) + d;
+    }
+    const r2 = v => Math.round(v*100)/100;
+    SURF_KEYS.forEach(k => km[k] = r2(km[k]));
+    Object.keys(sup).forEach(k => sup[k] = r2(sup[k]));
+    const runs = runsAbs.map(([a,c]) => [acc ? Math.round(a/acc*10000)/10000 : 0, c]);
+    return { v:2, fecha: new Date().toISOString().slice(0,10), km, sup, runs };
+  }
+
+  function surfacePct(t, key){
+    if(!t.surface) return null;
+    const tot = SURF_KEYS.reduce((a,k) => a + (t.surface.km[k]||0), 0);
+    return tot ? Math.round(100*(t.surface.km[key]||0)/tot) : null;
+  }
+
+  const surfBusy = new Set();
+  function surfaceHtml(t){
+    let html = "";
+    if(t.surface){
+      const pct = Object.fromEntries(SURF_KEYS.map(k => [k, surfacePct(t,k) || 0]));
+      html = `<div style="margin-top:6px;">${tr("surf_label")}:
+        <div class="surf-bar">${SURF_KEYS.map(k => pct[k] ? `<span style="width:${pct[k]}%;background:${SURF_COLORS[k]}"></span>` : "").join("")}</div>
+        <div class="surf-legend">${SURF_KEYS.filter(k => pct[k]).map(k => `<i style="background:${SURF_COLORS[k]}"></i>${tr(SURF_I18N[k])} ${pct[k]} %`).join(" ")}</div></div>`;
+    }
+    const busy = surfBusy.has(t.id);
+    html += `<button class="ghost popup-surf-btn" data-id="${t.id}" ${busy ? "disabled" : ""} style="width:100%; margin-top:6px; padding:5px 8px; font-size:12px;">${busy ? tr("surf_analyzing") : tr(t.surface ? "surf_reanalyze" : "surf_analyze")}</button>`;
+    return html;
+  }
+
+  function refreshTrackPopup(t){
+    routeLayer.eachLayer(l => { if(l._id === t.id) l.setPopupContent(popupHtml(t)); });
+  }
+
+  async function analyzeAndStore(t){
+    surfBusy.add(t.id); refreshTrackPopup(t);
+    try{
+      t.surface = await analyzeSurface(t);
+      await dbPutAll([t]);
+      try{ await surfCachePut([t]); }catch(e){}
+      if(elevTrack && elevTrack.id === t.id && !els("elevPanel").classList.contains("hidden")) renderProfileView();
+    } finally {
+      surfBusy.delete(t.id); refreshTrackPopup(t);
+    }
+  }
+
+  let surfBatchStop = false, surfBatchRunning = false;
+  async function analyzeAllFiltered(){
+    if(surfBatchRunning) return;
+    // Ordenadas por zona para aprovechar al máximo las teselas ya descargadas.
+    const zone = t => { const p = t.pts[0]; return Math.floor(p[0]/TILE_LAT)*100000 + Math.floor(p[1]/TILE_LON); };
+    const pending = filteredTracks().filter(t => !t.surface).sort((a,b) => zone(a) - zone(b));
+    if(!pending.length){ alert(tr("surf_none_pending")); return; }
+    if(!confirm(tr("surf_confirm_all", pending.length, Math.max(1, Math.round(pending.length*8/60))))) return;
+    surfBatchRunning = true; surfBatchStop = false;
+    const box = els("surfStatus");
+    box.classList.remove("hidden"); els("surfSpinner").classList.remove("hidden");
+    els("surfStop").classList.remove("hidden"); els("surfClose").classList.add("hidden");
+    let ok = 0, fail = 0;
+    for(let i=0;i<pending.length && !surfBatchStop;i++){
+      const t = pending[i];
+      els("surfStatusText").textContent = tr("surf_progress", i+1, pending.length, t.name);
+      try{ await analyzeAndStore(t); ok++; }
+      catch(e){ fail++; }
+      if(!els("tableModal").classList.contains("hidden")) renderTable();
+      await sleep(1000);
+    }
+    els("surfStatusText").textContent = tr("surf_done", ok, fail, surfBatchStop);
+    els("surfSpinner").classList.add("hidden"); els("surfStop").classList.add("hidden"); els("surfClose").classList.remove("hidden");
+    surfBatchRunning = false;
+  }
+
   function popupHtml(t){
     const vel = t.duration ? (t.km/(t.duration/3600)).toFixed(1) + " km/h" : "—";
     const tiempo = t.duration
@@ -994,7 +1324,8 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       ${t.date || ""}${t.type ? " · " + t.type : ""}<br>
       ${t.km} km · ${t.gain} m<br>
       ${tiempo} · ${vel} ${LANG==="en"?"avg":"media"}<br>
-      ${tr("index_label")}: ${idx != null ? idx : tr("no_index")}
+      ${tr("index_label")}: ${idx != null ? idx : tr("no_index")}${relativeIndex(t) != null ? `<br>${tr("idr_label")}: ${relativeIndex(t)}` : ""}
+      ${surfaceHtml(t)}
       <div style="margin-top:8px; display:flex; gap:6px; align-items:center;">
         <select class="popup-type-select" data-id="${t.id}" style="flex:1;">${typeOptionsHtml(t.type)}</select>
         <button class="ghost popup-type-save" data-id="${t.id}" style="padding:6px 10px; font-size:12px;">${tr("save")}</button>
@@ -1109,7 +1440,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     { color:"#000000", label:"> 12%" },
   ];
 
-  const w = 900, h = 110, padL = 42, padR = 12, padT = 8, padB = 18;
+  const w = 900, h = 116, padL = 42, padR = 12, padT = 8, padB = 24;
     const eles = valid.map(p=>p.ele);
     const span = (kmTo - kmFrom) || 1;
     const minE = Math.min(...eles), maxE = Math.max(...eles);
@@ -1140,19 +1471,36 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       areaSvg = `<polygon points="${areaPts}" fill="#e3653a" opacity="0.2"></polygon>`;
       lineaSvg = `<polyline points="${linePts}" fill="none" stroke="#e3653a" stroke-width="2"></polyline>`;
     }
+    // Banda de terreno bajo el perfil (si la ruta tiene el análisis con tramos).
+    let bandSvg = "";
+    const runs = t.surface && t.surface.runs;
+    if(runs && runs.length){
+      const yb = (h - padB + 2).toFixed(1);
+      runs.forEach((r, i) => {
+        const a = Math.max(kmFrom, r[0]*fullMaxD);
+        const b = Math.min(kmTo, (i+1 < runs.length ? runs[i+1][0] : 1)*fullMaxD);
+        if(b <= a) return;
+        bandSvg += `<rect x="${x(a).toFixed(1)}" y="${yb}" width="${Math.max(0.5, x(b)-x(a)).toFixed(1)}" height="6" fill="${SURF_COLORS[r[1]]}"></rect>`;
+      });
+    }
     svg.innerHTML = `
       ${areaSvg}
       ${lineaSvg}
+      ${bandSvg}
       <text x="${padL}" y="${h-4}" fill="#8fa199" font-size="10">${kmFrom.toFixed(1)} km</text>
       <text x="${w-padR}" y="${h-4}" fill="#8fa199" font-size="10" text-anchor="end">${kmTo.toFixed(1)} km</text>
       <text x="2" y="${(y(maxE)+4).toFixed(1)}" fill="#8fa199" font-size="10">${Math.round(maxE)} m</text>
       <text x="2" y="${(y(minE)+4).toFixed(1)}" fill="#8fa199" font-size="10">${Math.round(minE)} m</text>
       <rect id="elevSelRect" x="0" y="0" width="0" height="${h}" fill="rgba(255,255,255,0.18)" style="display:none; pointer-events:none;"></rect>
     `;
-    els("elevLegend").innerHTML = elevZoomRange
+    const terrainLegend = (runs && runs.length)
+      ? `<span style="margin-left:${elevZoomRange ? 8 : 0}px;">${tr("surf_label")}:</span>` + SURF_KEYS.filter(k => runs.some(r => r[1] === k))
+          .map(k => `<span class="elev-legend-item"><span class="sw" style="background:${SURF_COLORS[k]};"></span>${tr(SURF_I18N[k])}</span>`).join("")
+      : (t.surface ? `<span>${tr("surf_reanalyze_hint")}</span>` : "");
+    els("elevLegend").innerHTML = (elevZoomRange
       ? GRADE_LEGEND.map(g => `<span class="elev-legend-item"><span class="sw" style="background:${g.color};"></span>${g.label}</span>`).join("")
-      : "";
-    activeProfile = { valid, kmFrom, kmTo, padL, padR, w };
+      : "") + terrainLegend;
+    activeProfile = { valid, kmFrom, kmTo, padL, padR, w, fullMaxD };
     updateSegmentHighlight();
   }
 
@@ -1233,7 +1581,8 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     const svgRect = e.currentTarget.getBoundingClientRect();
     tip.style.left = (e.clientX - panelRect.left) + "px";
     tip.style.top = (svgRect.top - panelRect.top) + "px";
-    tip.innerHTML = `${nearest.km.toFixed(2)} km · ${Math.round(nearest.ele)} m · ${slopeHere >= 0 ? "+" : ""}${slopeHere.toFixed(1)}%`;
+    const terr = elevTrack ? terrainAt(elevTrack, nearest.km, activeProfile.fullMaxD) : null;
+    tip.innerHTML = `${nearest.km.toFixed(2)} km · ${Math.round(nearest.ele)} m · ${slopeHere >= 0 ? "+" : ""}${slopeHere.toFixed(1)}%` + (terr ? ` · ${tr(SURF_I18N[terr])}` : "");
     tip.classList.remove("hidden");
     if(!hoverMarker){
       hoverMarker = L.circleMarker([nearest.lat, nearest.lon], {
@@ -1316,6 +1665,25 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     return Math.round(t.gain/10 + t.km + (t.duration/3600)*25);
   }
 
+  // Índice de dificultad relativo (IDR): percentil del índice dentro de la selección actual.
+  // IDR = % de rutas seleccionadas (con índice) cuyo índice es menor o igual. La más difícil = 100.
+  let idrMap = new Map();
+  function updateIdrMap(list){
+    const withIdx = list.map(t => ({ id:t.id, v:difficultyIndex(t) })).filter(x => x.v != null);
+    const sorted = withIdx.map(x => x.v).sort((a,b) => a-b);
+    const n = sorted.length;
+    idrMap = new Map();
+    withIdx.forEach(x => {
+      let lo = 0, hi = n;               // primer índice con valor > x.v
+      while(lo < hi){ const mid = (lo+hi) >> 1; if(sorted[mid] <= x.v) lo = mid+1; else hi = mid; }
+      idrMap.set(x.id, Math.round(100*lo/n));
+    });
+  }
+  function relativeIndex(t){
+    const v = idrMap.get(t.id);
+    return v == null ? null : v;
+  }
+
   const state = { years: new Set(), types: new Set(), kmMin:0, kmMax:Infinity, elMin:0, elMax:Infinity, idxMin:0, idxMax:Infinity, nombre:"" };
   const seenYears = new Set(), seenTypes = new Set();
   const typeColors = new Map();
@@ -1373,7 +1741,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   }
 
   function filteredTracks(){
-    return tracks.filter(t => {
+    const list = tracks.filter(t => {
       const idx = difficultyIndex(t);
       return (t.year==null || state.years.has(t.year)) &&
         state.types.has(t.type || "Desconocido") &&
@@ -1382,6 +1750,8 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
         (idx == null || (idx >= state.idxMin && idx <= state.idxMax)) &&
         (!state.nombre || t.name.toLowerCase().includes(state.nombre));
     });
+    updateIdrMap(list);
+    return list;
   }
 
   function updateHeaderTotals(list){
@@ -1539,6 +1909,12 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     valid.forEach(x => { if(x.handle) fileHandles.set(x.t.id, x.handle); });
     const parsed = valid.map(x => x.t);
 
+    // Si se vuelve a cargar un GPX ya importado y la traza no ha cambiado, se conserva el análisis de terreno.
+    parsed.forEach(t => {
+      const old = tracks.find(o => o.id === t.id);
+      if(old && old.surface && Math.abs(old.km - t.km) < 0.05 && old.pts.length === t.pts.length) t.surface = old.surface;
+    });
+    await fillSurfacesFromCache(parsed);
     showLoading(tr("loading_saving_routes"));
     try{
       await dbPutAll(parsed);
@@ -1597,7 +1973,8 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
         <li><strong>Paneles:</strong> Gráficos (evolución mensual o anual), Récords y Top 10 (ordenable), Calendario de actividad (un cuadradito por día) y Tabla de rutas (ordenable por columna). Todos usan las rutas que cumplen los filtros activos.</li>
         <li><strong>Datos:</strong> exporta a CSV, o haz una copia de seguridad completa (y restáurala) desde el menú Datos. "Vaciar todos los datos" borra todo lo guardado en este navegador.</li>
       </ul>
-      <p><strong>Cómo se calcula:</strong> el desnivel suma subidas de más de 2 m tras limpiar la altitud de aberraciones; el tiempo en movimiento descuenta los tramos a menos de 0,3 m/s; el índice de dificultad es desnivel/10 + km + horas en movimiento × 25 (si no hay tiempo calculable, sale "Sin índice").</p>
+      <p><strong>Cómo se calcula:</strong> el desnivel suma subidas de más de 2 m tras limpiar la altitud de aberraciones; el tiempo en movimiento descuenta los tramos a menos de 0,3 m/s; el índice de dificultad es desnivel/10 + km + horas en movimiento × 25 (si no hay tiempo calculable, sale "Sin índice"). El IDR (índice de dificultad relativo) es el percentil de ese índice dentro de las rutas que cumplen los filtros activos: un IDR de 70 significa que la ruta es igual o más difícil que el 70 % de la selección, y la más difícil tiene 100. Por eso cambia al cambiar los filtros.</p>
+      <p><strong>Terreno:</strong> el botón "Analizar terreno" del popup (o Datos → Analizar terreno) descarga de OpenStreetMap los caminos de la zona, ajusta la traza a ellos y calcula qué parte va por asfalto, pista, senda o sin datos (a más de 25 m de cualquier camino). Para ello se envía a OpenStreetMap la zona de la ruta (no la traza). Refleja los caminos tal como están hoy en OpenStreetMap, no cuando hiciste la ruta. El resultado se guarda con la ruta y entra en la copia de seguridad. Además se guarda una copia aparte, que se conserva al vaciar los datos (salvo que elijas borrarla) y se recupera sola al volver a cargar el mismo GPX.</p>
       <p style="margin-bottom:0;"><strong>Privacidad:</strong> tus rutas se guardan solo en este navegador, nunca se suben a ningún servidor. Si cambias de navegador o lo limpias, haz antes una copia de seguridad.</p>
     `,
     en: `
@@ -1610,7 +1987,8 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
         <li><strong>Panels:</strong> Charts (monthly or yearly trends), Records & Top 10 (sortable), Activity calendar (one square per day) and Route table (sortable by column). All of them use the routes matching the active filters.</li>
         <li><strong>Data:</strong> export to CSV, or make a full backup (and restore it) from the Data menu. "Clear all data" deletes everything saved in this browser.</li>
       </ul>
-      <p><strong>How it's calculated:</strong> elevation gain adds climbs of more than 2 m after cleaning up altitude glitches; moving time excludes sections under 0.3 m/s; the difficulty index is gain/10 + km + moving hours × 25 (shown as "No index" when no time can be calculated).</p>
+      <p><strong>How it's calculated:</strong> elevation gain adds climbs of more than 2 m after cleaning up altitude glitches; moving time excludes sections under 0.3 m/s; the difficulty index is gain/10 + km + moving hours × 25 (shown as "No index" when no time can be calculated). The RDI (relative difficulty index) is that index's percentile within the routes matching the active filters: an RDI of 70 means the route is as hard as or harder than 70% of the selection, and the hardest one gets 100. That's why it changes when you change the filters.</p>
+      <p><strong>Terrain:</strong> the "Analyze terrain" button in the popup (or Data → Analyze terrain) downloads the ways in the area from OpenStreetMap, matches the track to them and works out how much is paved, track, trail or no data (more than 25 m from any way). Only the route's area (not the track) is sent to OpenStreetMap. It reflects the ways as they are in OpenStreetMap today, not when you rode. The result is saved with the route and included in the backup. A separate copy is also kept, which survives clearing the data (unless you choose to delete it) and comes back automatically when you load the same GPX again.</p>
       <p style="margin-bottom:0;"><strong>Privacy:</strong> your routes are stored only in this browser and never uploaded to any server. If you switch or clear your browser, back up first.</p>
     `,
   };
@@ -1632,12 +2010,13 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   }
   els("btnExport").addEventListener("click", () => {
     const list = filteredTracks();
-    const header = ["Nombre","Fecha","Tipo","Km","Desnivel (m)","Tiempo en movimiento (h)","Velocidad media (km/h)","Índice de dificultad"];
+    const header = ["Nombre","Archivo","Fecha","Tipo","Km","Desnivel (m)","Tiempo en movimiento (h)","Velocidad media (km/h)","Índice de dificultad","IDR (percentil en la selección)","% Asfalto","% Pista","% Senda","% Sin datos (terreno)"];
     const rows = list.map(t => {
       const idx = difficultyIndex(t);
       const horas = t.duration ? Math.round((t.duration/3600)*100)/100 : "";
       const vel = t.duration ? Math.round((t.km/(t.duration/3600))*10)/10 : "";
-      return [t.name, t.date || "", t.type || "Desconocido", t.km, t.gain, horas, vel, idx != null ? idx : ""];
+      return [t.name, t.fileName || t.id, t.date || "", t.type || "Desconocido", t.km, t.gain, horas, vel, idx != null ? idx : "", relativeIndex(t) != null ? relativeIndex(t) : "",
+        ...["asfalto","pista","senda","sinDatos"].map(k => t.surface ? surfacePct(t, k) : "")];
     });
     const csv = [header, ...rows].map(r => r.map(csvField).join(";")).join("\r\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -1679,7 +2058,9 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
         hideLoading();
         return;
       }
+      await fillSurfacesFromCache(validas);
       await dbPutAll(validas);
+      try{ await surfCachePut(validas); }catch(e){}
       const byId = new Map(tracks.map(t => [t.id, t]));
       validas.forEach(t => byId.set(t.id, t));
       tracks = [...byId.values()];
@@ -1693,7 +2074,12 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   });
 
   els("btnClearAll").addEventListener("click", async () => {
-    if(!confirm(tr("confirm_clear_all"))) return;
+    const nSurf = tracks.filter(t => t.surface).length;
+    if(!confirm(tr("confirm_clear_all") + (nSurf ? "\n\n" + tr("confirm_clear_surf_note", nSurf) : ""))) return;
+    // Por defecto se conservan los análisis de terreno (Cancelar = conservar).
+    let nCache = 0;
+    try{ nCache = (await surfCacheGetAll()).size; }catch(e){}
+    if(nCache && confirm(tr("confirm_clear_surf_cache", nCache))){ try{ await surfCacheClear(); }catch(e){} }
     await dbClear();
     tracks = [];
     seenYears.clear(); seenTypes.clear();
@@ -1741,6 +2127,9 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       const newInput = document.querySelector(`.popup-type-new[data-id="${CSS.escape(id)}"]`);
       let val = select.value === "__new__" ? newInput.value.trim() : select.value;
       applyTypeChange(id, val || "Desconocido");
+    } else if(e.target.matches(".popup-surf-btn")){
+      const t = tracks.find(x => x.id === e.target.dataset.id);
+      if(t && !surfBusy.has(t.id)) analyzeAndStore(t).catch(() => alert(tr("surf_error")));
     } else if(e.target.matches(".popup-rename-btn")){
       const id = e.target.dataset.id;
       const row = document.querySelector(`.popup-rename-row[data-id="${CSS.escape(id)}"]`);
@@ -2121,6 +2510,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     if(metric === "km") return t.km;
     if(metric === "gain") return t.gain;
     if(metric === "idx") return difficultyIndex(t);
+    if(metric === "idr") return relativeIndex(t);
     if(metric === "speed") return t.duration ? t.km/(t.duration/3600) : null;
     if(metric === "duration") return t.duration || null;
     return null;
@@ -2162,31 +2552,47 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     renderTop10();
   }
 
+  // Top 10: se ordena pulsando el título de la columna (como en la Tabla de rutas).
+  // Primer clic en una columna = los 10 mayores (▼); segundo clic = los 10 menores (▲).
+  const top10Cols = [
+    { key:"km",       i18n:"col_km" },
+    { key:"gain",     i18n:"col_gain" },
+    { key:"duration", i18n:"col_time" },
+    { key:"speed",    i18n:"col_speed" },
+    { key:"idx",      i18n:"col_idx" },
+    { key:"idr",      i18n:"col_idr" },
+  ];
+  let top10Sort = { key:"km", dir:-1 };
+
   function renderTop10(){
-    const metric = els("top10Metric").value;
+    const metric = top10Sort.key;
     const list = filteredTracks()
       .map(t => ({ t, v: metricValue(t, metric) }))
       .filter(x => x.v != null)
-      .sort((a,b) => b.v - a.v)
+      .sort((a,b) => (a.v - b.v) * top10Sort.dir)
       .slice(0, 10);
     const table = els("top10Table");
+    const arrow = key => top10Sort.key === key ? `<span class="arrow">${top10Sort.dir === 1 ? "▲" : "▼"}</span>` : "";
     table.querySelector("thead").innerHTML =
-      `<tr><th></th><th>${tr("col_num")}</th><th>${tr("col_route")}</th><th>${tr("col_date")}</th><th>${tr("col_type")}</th><th class="num">${tr("col_km")}</th><th class="num">${tr("col_gain")}</th><th class="num">${tr("col_idx")}</th><th class="num">${tr("col_speed")}</th></tr>`;
+      `<tr><th></th><th>${tr("col_num")}</th><th>${tr("col_route")}</th><th>${tr("col_date")}</th><th>${tr("col_type")}</th>` +
+      top10Cols.map(c => `<th class="num" data-key="${c.key}">${tr(c.i18n)}${arrow(c.key)}</th>`).join("") + `</tr>`;
     const tbody = table.querySelector("tbody");
     tbody.innerHTML = "";
     if(!list.length){
-      tbody.innerHTML = `<tr><td colspan="9" style="color:var(--text-dim);">${tr("not_enough_data")}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="${5 + top10Cols.length}" style="color:var(--text-dim);">${tr("not_enough_data")}</td></tr>`;
       updateCompareBar("top10");
       return;
     }
     list.forEach((x,i) => {
       const t = x.t;
-      const idx = difficultyIndex(t);
+      const idx = difficultyIndex(t), idr = relativeIndex(t);
       const vel = t.duration ? (t.km/(t.duration/3600)).toFixed(1) + " km/h" : "—";
+      const tiempo = t.duration ? formatDuration(t.duration) : "—";
       const row = document.createElement("tr");
       row.innerHTML = `<td><input type="checkbox" class="cmp-check" data-id="${t.id}" ${compareSelection.has(t.id)?"checked":""}></td>
         <td>${i+1}</td><td>${t.name}</td><td>${t.date || "—"}</td><td>${t.type || "Desconocido"}</td>
-        <td class="num">${t.km}</td><td class="num">${t.gain}</td><td class="num">${idx != null ? idx : "—"}</td><td class="num">${vel}</td>`;
+        <td class="num">${t.km}</td><td class="num">${t.gain}</td><td class="num">${tiempo}</td><td class="num">${vel}</td>
+        <td class="num">${idx != null ? idx : "—"}</td><td class="num">${idr != null ? idr : "—"}</td>`;
       row.querySelector(".cmp-check").addEventListener("click", e => { e.stopPropagation(); toggleCompare(t.id); });
       row.addEventListener("click", () => focusTrack(t.id));
       tbody.appendChild(row);
@@ -2194,11 +2600,19 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     updateCompareBar("top10");
   }
 
+  els("top10Table").addEventListener("click", e => {
+    const th = e.target.closest("th[data-key]");
+    if(!th) return;
+    const key = th.dataset.key;
+    if(top10Sort.key === key) top10Sort.dir *= -1;
+    else { top10Sort.key = key; top10Sort.dir = -1; }
+    renderTop10();
+  });
+
   function openRecords(){ els("recordsModal").classList.remove("hidden"); renderRecords(); }
   function closeRecords(){ els("recordsModal").classList.add("hidden"); }
   els("btnRecords").addEventListener("click", openRecords);
   els("recordsClose").addEventListener("click", closeRecords);
-  els("top10Metric").addEventListener("change", renderTop10);
   els("recordsModal").addEventListener("click", e => { if(e.target === els("recordsModal")) closeRecords(); });
   document.addEventListener("keydown", e => { if(e.key === "Escape") closeRecords(); });
 
@@ -2472,6 +2886,10 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     { key:"duration", i18n:"col_time", num:true },
     { key:"speed",    i18n:"col_speed", num:true },
     { key:"idx",      i18n:"col_idx", num:true },
+    { key:"idr",      i18n:"col_idr", num:true },
+    { key:"s_asf",    i18n:"col_s_asf", num:true },
+    { key:"s_pis",    i18n:"col_s_pis", num:true },
+    { key:"s_sen",    i18n:"col_s_sen", num:true },
   ];
   let tableSort = { key:"date", dir:-1 };
   let tablePage = 0;
@@ -2480,6 +2898,10 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   function tableRowValue(t, key){
     if(key === "speed") return t.duration ? t.km/(t.duration/3600) : null;
     if(key === "idx") return difficultyIndex(t);
+    if(key === "idr") return relativeIndex(t);
+    if(key === "s_asf") return surfacePct(t, "asfalto");
+    if(key === "s_pis") return surfacePct(t, "pista");
+    if(key === "s_sen") return surfacePct(t, "senda");
     if(key === "type") return t.type || "Desconocido";
     return t[key];
   }
@@ -2512,9 +2934,9 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
 
     const table = els("dataTable");
     const thead = table.querySelector("thead"), tbody = table.querySelector("tbody");
-    thead.innerHTML = "<tr><th></th>" + tableCols.map(c => {
+    thead.innerHTML = `<tr><th class="c-check"></th>` + tableCols.map(c => {
       const arrow = tableSort.key === c.key ? `<span class="arrow">${tableSort.dir === 1 ? "▲" : "▼"}</span>` : "";
-      return `<th class="${c.num ? "num" : ""}" data-key="${c.key}">${tr(c.i18n)}${arrow}</th>`;
+      return `<th class="c-${c.key}${c.num ? " num" : ""}" data-key="${c.key}">${tr(c.i18n)}${arrow}</th>`;
     }).join("") + "</tr>";
     tbody.innerHTML = "";
     pageRows.forEach(t => {
@@ -2541,7 +2963,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   els("tableModal").addEventListener("click", e => { if(e.target === els("tableModal")) closeTable(); });
   document.addEventListener("keydown", e => { if(e.key === "Escape") closeTable(); });
   els("dataTable").addEventListener("click", e => {
-    const th = e.target.closest("th");
+    const th = e.target.closest("th[data-key]");
     if(!th) return;
     const key = th.dataset.key;
     if(tableSort.key === key) tableSort.dir *= -1;
@@ -2552,11 +2974,37 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   els("tablePrev").addEventListener("click", () => { tablePage--; renderTable(); });
   els("tableNext").addEventListener("click", () => { tablePage++; renderTable(); });
 
+  els("btnSurfAll").addEventListener("click", analyzeAllFiltered);
+  els("surfStop").addEventListener("click", () => { surfBatchStop = true; });
+  els("surfClose").addEventListener("click", () => els("surfStatus").classList.add("hidden"));
+
+  // Popup pequeño con el texto completo cuando una celda de la tabla no cabe entera.
+  const cellTip = document.createElement("div");
+  cellTip.className = "cell-tip hidden";
+  document.body.appendChild(cellTip);
+  els("dataTable").addEventListener("mouseover", e => {
+    const cell = e.target.closest("td");
+    if(!cell || cell.scrollWidth <= cell.clientWidth){ cellTip.classList.add("hidden"); return; }
+    cellTip.textContent = cell.textContent.trim();
+    cellTip.classList.remove("hidden");
+    const r = cell.getBoundingClientRect();
+    const tw = cellTip.offsetWidth;
+    cellTip.style.left = Math.max(8, Math.min(r.left, window.innerWidth - tw - 8)) + "px";
+    cellTip.style.top = (r.bottom + 4) + "px";
+  });
+  els("dataTable").addEventListener("mouseleave", () => cellTip.classList.add("hidden"));
+  els("dataTable").addEventListener("click", () => cellTip.classList.add("hidden"));
+
   // ---------- arranque ----------
   (async function init(){
     applyI18n();
     showLoading(tr("loading_saved_routes"));
     try{ tracks = await dbGetAll(); }catch(e){ tracks = []; }
+    try{
+      await surfCachePut(tracks);                      // los análisis hechos antes de existir la copia aparte
+      const filled = await fillSurfacesFromCache(tracks);
+      if(filled.length) await dbPutAll(filled);
+    }catch(e){}
     rebuildFilterLists();
     applyFiltersAndRedraw();
     hideLoading();
