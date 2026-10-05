@@ -258,7 +258,13 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
           <button class="menu-item hidden" id="btnRepeats" data-i18n="panel_repeats">Rutas repetidas</button>
         </div>
       </div>
-      <button class="ghost" id="btnHelp" data-i18n="help">Ayuda</button>
+      <div class="menu" data-menu="info">
+        <button class="menu-btn" data-i18n="menu_info">Info ▾</button>
+        <div class="menu-dropdown">
+          <button class="menu-item" id="btnHelp" data-i18n="help">Ayuda</button>
+          <button class="menu-item" id="btnAbout" data-i18n="about">Quiénes somos</button>
+        </div>
+      </div>
       <button class="ghost lang-btn" id="btnLangEs" title="Español">
         <svg viewBox="0 0 3 2" width="20" height="14"><rect width="3" height="2" fill="#AA151B"/><rect y="0.5" width="3" height="1" fill="#F1BF00"/></svg>
       </button>
@@ -450,6 +456,15 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       </div>
     </div>
   </div>
+  <div class="modal-overlay hidden" id="aboutModal">
+    <div class="modal" style="width:460px; max-height:80vh; overflow-y:auto;">
+      <h3 id="aboutTitle" style="margin:0 0 10px;">Quiénes somos</h3>
+      <div id="aboutBody" style="font-size:13px; line-height:1.6; color:var(--text);"></div>
+      <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+        <button class="primary" id="aboutClose" data-i18n="understood">Entendido</button>
+      </div>
+    </div>
+  </div>
   <div class="modal-overlay hidden" id="typeModal">
     <div class="modal">
       <h3 style="margin:0 0 4px;" data-i18n="type_modal_title">Tipo de ruta</h3>
@@ -565,7 +580,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   const I18N = {
     es: {
       app_title: "🏔️ Heatmap de rutas",
-      menu_data: "Datos ▾", menu_filters: "Filtros ▾", menu_panels: "Paneles ▾",
+      menu_data: "Datos ▾", menu_filters: "Filtros ▾", menu_panels: "Paneles ▾", menu_info: "Info ▾", about: "Quiénes somos",
       add_gpx: "Añadir GPX", export_csv: "Exportar a CSV",
       backup_download: "Descargar copia de seguridad", backup_restore: "Restaurar copia de seguridad",
       clear_all: "Vaciar todos los datos",
@@ -681,7 +696,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     },
     en: {
       app_title: "🏔️ Route heatmap",
-      menu_data: "Data ▾", menu_filters: "Filters ▾", menu_panels: "Panels ▾",
+      menu_data: "Data ▾", menu_filters: "Filters ▾", menu_panels: "Panels ▾", menu_info: "Info ▾", about: "About",
       add_gpx: "Add GPX", export_csv: "Export to CSV",
       backup_download: "Download backup", backup_restore: "Restore backup",
       clear_all: "Clear all data",
@@ -815,6 +830,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     try{ localStorage.setItem("heatmap-lang", LANG); }catch(e){}
     applyI18n();
     renderHelp();
+    if(!els("aboutModal").classList.contains("hidden")) renderAbout();
     rebuildFilterLists();
     if(!els("elevPanel").classList.contains("hidden")) renderProfileView();
     if(selectedLine && selectedLine._id){
@@ -1965,7 +1981,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   const HELP_HTML = {
     es: `
       <ul style="margin:0 0 10px; padding-left:18px;">
-        <li><strong>Menú superior:</strong> <em>Datos</em> (añadir GPX, exportar CSV, copia de seguridad, vaciar todo), <em>Filtros</em> (mostrar/ocultar panel, restablecer) y <em>Paneles</em> (gráficos, récords, calendario, tabla). "Ayuda" y las banderas quedan aparte.</li>
+        <li><strong>Menú superior:</strong> <em>Datos</em> (añadir GPX, exportar CSV, copia de seguridad, vaciar todo), <em>Filtros</em> (mostrar/ocultar panel, restablecer) <em>Paneles</em> (gráficos, récords, calendario, tabla) e <em>Info</em> (esta ayuda y Quiénes somos). Las banderas cambian el idioma.</li>
         <li><strong>Añadir rutas</strong> desde Datos → Añadir GPX, seleccionando varios archivos a la vez; se guardan en este navegador. Si el GPX no trae el tipo, te lo pregunta; ese tipo asignado a varios archivos de golpe solo se guarda en la aplicación. Si luego cambias el tipo, renombras o borras una ruta concreta desde su popup, con Chrome o Edge ese cambio sí se graba también en su archivo GPX (pidiéndote confirmar el permiso una vez, por ser un solo archivo).</li>
         <li><strong>Filtros</strong> (panel izquierdo): nombre, año, tipo (con su color, que puedes cambiar), distancia, desnivel e índice de dificultad. Se combinan entre sí y afectan al mapa y a los totales de la cabecera.</li>
         <li><strong>Una ruta en el mapa:</strong> al pincharla se resalta y se abre su popup (datos, cambiar tipo, renombrar, borrar) y, abajo, su perfil de elevación. Arrastra sobre el perfil para ampliar un tramo y ver su pendiente coloreada por sectores; pasa el ratón para ver km, altitud y pendiente de cada punto.</li>
@@ -1979,7 +1995,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     `,
     en: `
       <ul style="margin:0 0 10px; padding-left:18px;">
-        <li><strong>Top menu:</strong> <em>Data</em> (add GPX, export CSV, backup, clear all), <em>Filters</em> (show/hide panel, reset) and <em>Panels</em> (charts, records, calendar, table). "Help" and the flags sit apart.</li>
+        <li><strong>Top menu:</strong> <em>Data</em> (add GPX, export CSV, backup, clear all), <em>Filters</em> (show/hide panel, reset) <em>Panels</em> (charts, records, calendar, table) and <em>Info</em> (this help and About). The flags switch the language.</li>
         <li><strong>Add routes</strong> from Data → Add GPX, picking several files at once; they're saved in this browser. If a GPX has no type, you'll be asked; a type assigned to many files at once is only saved in the app. If you later change the type, rename, or delete one specific route from its popup, with Chrome or Edge that change is also written to its GPX file (asking you to confirm the permission once, since it's a single file).</li>
         <li><strong>Filters</strong> (left panel): name, year, type (with its own color, which you can change), distance, elevation gain and difficulty index. They all combine and affect the map and the header totals.</li>
         <li><strong>A route on the map:</strong> clicking it highlights it and opens its popup (data, change type, rename, delete) and, below, its elevation profile. Drag over the profile to zoom into a section and see its gradient colored by sector; hover to see the km, altitude and gradient at any point.</li>
@@ -1998,6 +2014,34 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   }
   els("btnHelp").addEventListener("click", () => { renderHelp(); els("helpModal").classList.remove("hidden"); });
   els("helpClose").addEventListener("click", () => els("helpModal").classList.add("hidden"));
+
+  // ---------- Quiénes somos / About ----------
+  const APP_VERSION = "1.1", APP_VERSION_DATE = "2026-10-05";
+  const APP_AUTHOR = "Angel Herrero", APP_EMAIL = "angelherreropla@gmail.com";
+  const ABOUT_HTML = {
+    es: () => `
+      <p><strong>Heatmap de rutas</strong> es una aplicación para ver en un mapa todas tus rutas GPX a la vez, como un mapa de calor de por dónde has pasado, y analizarlas: filtros por año, tipo, distancia, desnivel y dificultad, gráficos, récords, calendario, perfil de cada ruta y tipo de terreno.</p>
+      <p><strong>Autor:</strong> ${APP_AUTHOR}<br>
+      <strong>Contacto:</strong> <a href="mailto:${APP_EMAIL}" style="color:var(--accent-2);">${APP_EMAIL}</a></p>
+      <p><strong>Privacidad:</strong> tus rutas no salen de tu navegador: se leen y se guardan solo en este equipo, sin cuentas ni servidores propios. La única consulta externa con datos de tus rutas es el análisis de terreno, que pide a OpenStreetMap (Overpass) los caminos de la zona por la que pasa la ruta, sin enviar la traza. Los fondos de mapa se descargan de los servidores de cada proveedor.</p>
+      <p><strong>Créditos:</strong> datos de mapa © colaboradores de <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" style="color:var(--accent-2);">OpenStreetMap</a> (licencia ODbL); análisis de terreno con la API Overpass; capas de <a href="https://opentopomap.org" target="_blank" rel="noopener" style="color:var(--accent-2);">OpenTopoMap</a>, <a href="https://www.cyclosm.org" target="_blank" rel="noopener" style="color:var(--accent-2);">CyclOSM</a> y Esri (satélite); mapa con Leaflet y Leaflet.heat; gráficos con Chart.js.</p>
+      <p style="margin-bottom:0; color:var(--text-dim);">Versión ${APP_VERSION} · ${APP_VERSION_DATE}</p>`,
+    en: () => `
+      <p><strong>Route heatmap</strong> is an app to see all your GPX routes on one map at once, as a heatmap of where you have been, and analyze them: filters by year, type, distance, elevation gain and difficulty, charts, records, calendar, each route's elevation profile and terrain type.</p>
+      <p><strong>Author:</strong> ${APP_AUTHOR}<br>
+      <strong>Contact:</strong> <a href="mailto:${APP_EMAIL}" style="color:var(--accent-2);">${APP_EMAIL}</a></p>
+      <p><strong>Privacy:</strong> your routes never leave your browser: they are read and stored only on this device, with no accounts or servers of our own. The only external request involving your routes is the terrain analysis, which asks OpenStreetMap (Overpass) for the ways in the area the route goes through, without sending the track. Map backgrounds are downloaded from each provider's servers.</p>
+      <p><strong>Credits:</strong> map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" style="color:var(--accent-2);">OpenStreetMap</a> contributors (ODbL license); terrain analysis with the Overpass API; layers from <a href="https://opentopomap.org" target="_blank" rel="noopener" style="color:var(--accent-2);">OpenTopoMap</a>, <a href="https://www.cyclosm.org" target="_blank" rel="noopener" style="color:var(--accent-2);">CyclOSM</a> and Esri (satellite); map built with Leaflet and Leaflet.heat; charts with Chart.js.</p>
+      <p style="margin-bottom:0; color:var(--text-dim);">Version ${APP_VERSION} · ${APP_VERSION_DATE}</p>`,
+  };
+  function renderAbout(){
+    els("aboutTitle").textContent = tr("about");
+    els("aboutBody").innerHTML = (ABOUT_HTML[LANG] || ABOUT_HTML.es)();
+  }
+  els("btnAbout").addEventListener("click", () => { renderAbout(); els("aboutModal").classList.remove("hidden"); });
+  els("aboutClose").addEventListener("click", () => els("aboutModal").classList.add("hidden"));
+  els("aboutModal").addEventListener("click", e => { if(e.target === els("aboutModal")) els("aboutModal").classList.add("hidden"); });
+  document.addEventListener("keydown", e => { if(e.key === "Escape") els("aboutModal").classList.add("hidden"); });
 
   els("btnAdd").addEventListener("click", pickGpxFiles);
   els("btnAddEmpty").addEventListener("click", pickGpxFiles);
