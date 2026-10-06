@@ -356,7 +356,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       </div>
     </main>
   </div>
-  <div class="surf-status hidden" id="backupReminder" style="top:auto; bottom:22px;">
+  <div class="surf-status hidden" id="backupReminder">
     <span>💾</span>
     <span id="backupReminderText"></span>
     <button class="primary" id="backupRemNow" data-i18n="backup_rem_now">Descargar copia</button>
@@ -646,7 +646,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       elev_no_data: "Este GPX no trae datos de elevación.",
       elev_hint: "arrastra sobre el gráfico para ampliar un tramo",
       elev_slope_full: (avgUp,maxUp,maxDown) => `Pendiente media (subidas): ${avgUp} · Pendiente máx.: ${maxUp} % · Bajada máx.: ${maxDown} % (tramos de 200 m)`,
-      elev_segment: (dist,gain,avg,marks) => `Tramo seleccionado: ${dist} km · +${gain} m · ${avg}% de media &nbsp;·&nbsp; ${marks} &nbsp;·&nbsp; <a href="#" class="elev-reset-zoom" style="color:var(--accent-2);">Ver ruta completa</a>`,
+      elev_segment: (dist,gain,loss,avg) => `Tramo seleccionado: ${dist} km · subida +${gain} m · bajada −${loss} m · ${avg}% de media &nbsp;·&nbsp; <a href="#" class="elev-reset-zoom" style="color:var(--accent-2);">Ver ruta completa</a>`,
       km_unit: "km",
       unknown_type: "Desconocido",
       no_index: "Sin índice",
@@ -772,7 +772,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       elev_no_data: "This GPX has no elevation data.",
       elev_hint: "drag over the chart to zoom into a section",
       elev_slope_full: (avgUp,maxUp,maxDown) => `Average gradient (climbs): ${avgUp} · Max gradient: ${maxUp} % · Max descent: ${maxDown} % (200 m segments)`,
-      elev_segment: (dist,gain,avg,marks) => `Selected section: ${dist} km · +${gain} m · ${avg}% average &nbsp;·&nbsp; ${marks} &nbsp;·&nbsp; <a href="#" class="elev-reset-zoom" style="color:var(--accent-2);">View full route</a>`,
+      elev_segment: (dist,gain,loss,avg) => `Selected section: ${dist} km · climb +${gain} m · descent −${loss} m · ${avg}% average &nbsp;·&nbsp; <a href="#" class="elev-reset-zoom" style="color:var(--accent-2);">View full route</a>`,
       km_unit: "km",
       unknown_type: "Unknown",
       no_index: "No index",
@@ -1637,11 +1637,9 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       const gainTramo = computeGain(valid.map(p=>p.ele));
       const distKm = kmTo - kmFrom;
       const avgPct = distKm > 0 ? (valid[valid.length-1].ele - valid[0].ele) / (distKm*1000) * 100 : 0;
-      const marks = [0.25, 0.5, 0.75].map(f => {
-        const km = kmFrom + f*distKm;
-        return `${Math.round(f*100)}%: ${gradeAt(valid, km, Math.min(0.2, distKm/3)).toFixed(1)}%`;
-      }).join(" · ");
-      els("elevSlope").innerHTML = tr("elev_segment", distKm.toFixed(2), gainTramo, avgPct.toFixed(1), marks);
+      // Bajada acumulada con el mismo método que la subida (umbral de 2 m), invirtiendo las altitudes.
+      const lossTramo = computeGain(valid.map(p => p.ele == null ? null : -p.ele));
+      els("elevSlope").innerHTML = tr("elev_segment", distKm.toFixed(2), gainTramo, lossTramo, avgPct.toFixed(1));
     } else {
       const slopes = slopeStats(allValid);
       els("elevSlope").innerHTML = (slopes
