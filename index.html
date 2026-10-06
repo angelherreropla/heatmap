@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Heatmap de rutas (OpenStreetMap)</title>
+<title>Hinterway · Heatmap de rutas</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23121a2e%22/%3E%3Ccircle%20cx%3D%2244%22%20cy%3D%2220%22%20r%3D%227%22%20fill%3D%22%23ff8a69%22/%3E%3Cpath%20d%3D%22M6%2050%20L24%2022%20L34%2036%20L42%2025%20L58%2050%20Z%22%20fill%3D%22%237fae8e%22/%3E%3Cpath%20d%3D%22M34%2036%20L42%2025%20L58%2050%20L30%2050%20Z%22%20fill%3D%22%23ff6f74%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -104,6 +104,28 @@ main{ position:relative; flex:1; min-width:0; }
   background:var(--panel); border-top:1px solid var(--line); padding:8px 14px 6px;
 }
 .elev-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; }
+/* Cabecera "nueva" de la ventana de la ruta (datos + acciones; sustituye al popup) */
+.rp-head{ display:flex; align-items:center; gap:10px 14px; margin-bottom:6px; flex-wrap:wrap; }
+.rp-id{ min-width:140px; flex:1 1 150px; }
+.rp-name{ font-family:'Fraunces',Georgia,serif; font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rp-sub{ font-size:12px; color:var(--text-dim); margin-top:1px; display:flex; align-items:center; gap:6px; white-space:nowrap; overflow:hidden; }
+.rp-sub .dot{ width:9px; height:9px; border-radius:2px; display:inline-block; flex:0 0 auto; }
+.rp-rename{ display:flex; gap:6px; }
+.rp-rename input{ flex:1; min-width:0; background:var(--panel-2); border:1px solid var(--line); color:var(--text); border-radius:6px; padding:4px 8px; font:inherit; font-size:13px; }
+.rp-stats{ display:flex; gap:6px; flex:0 0 auto; flex-wrap:wrap; }
+.rp-stat{ background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:4px 9px; text-align:center; min-width:58px; }
+.rp-stat .v{ font-family:'Fraunces',Georgia,serif; font-weight:700; font-size:15px; line-height:1.15; white-space:nowrap; }
+.rp-stat .l{ font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.03em; white-space:nowrap; }
+.rp-terrain{ flex:0 1 180px; min-width:140px; }
+.rp-terrain .bar{ display:flex; height:8px; border-radius:4px; overflow:hidden; background:var(--line); }
+.rp-terrain .bar span{ display:block; height:100%; }
+.rp-terrain .lg{ font-size:11px; color:var(--text-dim); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rp-terrain .lg i{ display:inline-block; width:8px; height:8px; border-radius:2px; margin:0 3px 0 7px; vertical-align:middle; }
+.rp-terrain .lg i:first-child{ margin-left:0; }
+.rp-actions{ display:flex; gap:6px; flex:0 0 auto; align-items:center; margin-left:auto; }
+.rp-actions button{ font-size:12px; padding:5px 9px; }
+.rp-actions select, .rp-actions input{ font-size:12px; padding:5px 6px; max-width:130px; background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:6px; }
+.rp-actions .danger{ color:var(--danger); border-color:var(--danger); }
 .elev-header strong{ font-size:13px; font-weight:600; }
 #elevSvg{ cursor:crosshair; user-select:none; }
 .elev-header button{ padding:2px 9px; font-size:12px; line-height:1; }
@@ -202,7 +224,14 @@ main{ position:relative; flex:1; min-width:0; }
 .compare-info .cmp-name{ font-family:'Fraunces',serif; font-weight:700; font-size:14.5px; display:flex; align-items:center; gap:7px; }
 .compare-info .sw{ width:11px; height:11px; border-radius:50%; display:inline-block; }
 td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
-.yr-modal{ width:min(900px, 94vw); max-height:90vh; overflow-y:auto; }
+.yr-modal{ width:min(900px, 94vw); max-height:90vh; overflow-y:auto; position:relative; }
+.share-panel{ position:absolute; top:58px; right:18px; z-index:5; width:min(340px, calc(100% - 36px)); background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:12px; box-shadow:0 12px 30px rgba(0,0,0,.5); }
+.share-panel img{ width:100%; border-radius:8px; border:1px solid var(--line); display:block; margin-bottom:10px; }
+.share-grid{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.share-grid button{ font-size:12.5px; padding:7px 8px; text-align:left; display:flex; align-items:center; gap:7px; }
+.share-grid button .ico{ width:16px; height:16px; border-radius:4px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff; flex:0 0 auto; }
+.share-grid .wide{ grid-column:1 / -1; justify-content:center; }
+.share-note{ font-size:11.5px; color:var(--text-dim); margin-top:8px; line-height:1.4; }
 .yr-hero{ display:flex; gap:36px; flex-wrap:wrap; margin:18px 0 22px; }
 .yr-hero .yr-num{ font-family:'Fraunces',serif; font-weight:700; font-size:40px; background:var(--accent-grad); -webkit-background-clip:text; background-clip:text; color:transparent; line-height:1; }
 .yr-hero .yr-label{ font-size:12.5px; color:var(--text-dim); margin-top:4px; }
@@ -222,7 +251,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
 <body>
 <div class="app">
   <header>
-    <h1 data-i18n="app_title">🏔️ Heatmap de rutas</h1>
+    <h1 data-i18n="app_title">🏔️ Hinterway</h1>
     <span class="count" id="headerCount"></span>
     <span class="count" id="headerStats"></span>
     <div class="spacer"></div>
@@ -302,15 +331,19 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       <h2 data-i18n="filter_idx">Índice de dificultad</h2>
       <div class="range-row"><input type="number" id="idxMin" min="0" step="5"><span data-i18n="range_to">a</span><input type="number" id="idxMax" min="0" step="5"></div>
 
+      <h2 data-i18n="route_intensity">Intensidad de las rutas</h2>
+      <div class="range-row"><input type="range" id="routeIntensity" min="1" max="10" step="1" value="5" style="flex:1; accent-color:var(--accent);"><span id="routeIntensityVal" style="width:28px; text-align:right;">5</span></div>
+
       <input type="file" id="restoreInput" accept=".json" class="hidden">
     </aside>
     <main>
       <div id="map"></div>
       <div class="elev-panel hidden" id="elevPanel">
-        <div class="elev-header">
+        <div class="elev-header" id="elevHeaderOld">
           <strong id="elevTitle"></strong>
           <button class="ghost" id="elevClose">✕</button>
         </div>
+        <div class="rp-head hidden" id="routeHead"></div>
         <p id="elevSlope" class="stats-info" style="margin:0 0 4px;"></p>
         <svg id="elevSvg" width="100%" height="116"></svg>
         <div id="elevTooltip" class="elev-tooltip hidden"></div>
@@ -360,10 +393,16 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
         <h3 style="margin:0;" data-i18n="panel_year_review">Resumen anual</h3>
         <div class="stats-controls">
           <label><span data-i18n="filter_year">Año</span> <select id="yrYear"></select></label>
+          <button class="ghost" id="yrShareBtn" data-i18n="share">Compartir…</button>
           <button class="ghost" id="yrClose">✕</button>
         </div>
       </div>
       <div id="yrBody"></div>
+      <div class="share-panel hidden" id="sharePanel">
+        <img id="shareImg" alt="">
+        <div class="share-grid" id="shareGrid"></div>
+        <div class="share-note" id="shareNote"></div>
+      </div>
     </div>
   </div>
   <div class="modal-overlay hidden" id="compareModal">
@@ -485,14 +524,15 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   // ---------- IndexedDB ----------
   // "tracks": las rutas. "surfaces": copia aparte de los análisis de terreno (clave = archivo|km),
   // que sobrevive a "Vaciar todos los datos" para no tener que volver a consultar OpenStreetMap.
-  const DB_NAME = "gpx-heatmap", STORE = "tracks", SURF_STORE = "surfaces";
+  const DB_NAME = "gpx-heatmap", STORE = "tracks", SURF_STORE = "surfaces", TILE_STORE = "osmTiles";
   function openDB(){
     return new Promise((res, rej) => {
-      const req = indexedDB.open(DB_NAME, 2);
+      const req = indexedDB.open(DB_NAME, 3);
       req.onupgradeneeded = () => {
         const db = req.result;
         if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: "id" });
         if(!db.objectStoreNames.contains(SURF_STORE)) db.createObjectStore(SURF_STORE, { keyPath: "key" });
+        if(!db.objectStoreNames.contains(TILE_STORE)) db.createObjectStore(TILE_STORE, { keyPath: "key" });
       };
       req.onblocked = () => alert(tr("alert_db_blocked"));
       req.onsuccess = () => { const db = req.result; db.onversionchange = () => db.close(); res(db); };
@@ -546,8 +586,9 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   async function surfCacheClear(){
     const db = await openDB();
     return new Promise((res, rej) => {
-      const tx = db.transaction(SURF_STORE, "readwrite");
+      const tx = db.transaction([SURF_STORE, TILE_STORE], "readwrite");
       tx.objectStore(SURF_STORE).clear();
+      tx.objectStore(TILE_STORE).clear();
       tx.oncomplete = res; tx.onerror = () => rej(tx.error);
     });
   }
@@ -579,7 +620,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   function LOC(){ return LANG === "en" ? "en-US" : "es-ES"; }
   const I18N = {
     es: {
-      app_title: "🏔️ Heatmap de rutas",
+      app_title: "🏔️ Hinterway",
       menu_data: "Datos ▾", menu_filters: "Filtros ▾", menu_panels: "Paneles ▾", menu_info: "Info ▾", about: "Quiénes somos",
       add_gpx: "Añadir GPX", export_csv: "Exportar a CSV",
       backup_download: "Descargar copia de seguridad", backup_restore: "Restaurar copia de seguridad",
@@ -590,7 +631,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       filter_name: "Nombre", filter_name_ph: "Buscar en el nombre…",
       filter_year: "Año", filter_type: "Tipo de actividad",
       all: "Todos", none: "Ninguno",
-      filter_km: "Distancia (km)", filter_gain: "Desnivel positivo (m)", filter_idx: "Índice de dificultad",
+      filter_km: "Distancia (km)", filter_gain: "Desnivel positivo (m)", filter_idx: "Índice de dificultad", route_intensity: "Intensidad de las rutas",
       range_to: "a",
       empty_title: "Aún no hay rutas cargadas",
       empty_text: "Selecciona los archivos GPX de tu carpeta (puedes elegirlos todos a la vez) y luego indica de qué tipo son.",
@@ -628,8 +669,10 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       col_num: "#", col_route: "Ruta", col_date: "Fecha", col_type: "Tipo", col_km: "Km",
       col_gain: "Desnivel", col_idx: "Índice", col_idr: "IDR", idr_label: "IDR (percentil en la selección)",
       col_s_asf: "% Asfalto", col_s_pis: "% Pista", col_s_sen: "% Senda",
+      rp_gain: "m desnivel", rp_moving: "en mov.", rp_index: "índice", rp_type: "Tipo de actividad (se guarda al elegirlo)",
+      rp_no_terrain: "Terreno sin analizar (↻)", close: "Cerrar",
       surf_label: "Terreno", surf_reanalyze_hint: "Pulsa \"Reanalizar\" en el popup para ver el terreno sobre el perfil.", surf_asphalt: "Asfalto", surf_track: "Pista", surf_path: "Senda", surf_nodata: "Sin datos",
-      surf_analyze: "Analizar terreno", surf_reanalyze: "Reanalizar", surf_analyzing: "Analizando terreno…",
+      surf_tiles: "zonas", surf_analyze: "Analizar terreno", surf_reanalyze: "Reanalizar", surf_analyzing: "Analizando terreno…",
       surf_analyze_all: "Analizar terreno (rutas filtradas)", surf_stop: "Detener", surf_close: "Cerrar",
       surf_error: "No se ha podido analizar el terreno (el servidor de OpenStreetMap no responde o no hay conexión). Prueba más tarde.",
       surf_none_pending: "Todas las rutas que cumplen los filtros ya tienen el terreno analizado.",
@@ -670,7 +713,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       alert_db_blocked: "Hay otra pestaña con una versión anterior de esta app abierta. Ciérrala para que esta pueda actualizar sus datos guardados.",
       confirm_clear_all: "Esto borra todas las rutas cargadas en este navegador. ¿Continuar?",
       confirm_clear_surf_note: n => `${n} ruta(s) tienen el terreno analizado. A continuación podrás elegir si conservas esos análisis para recuperarlos al volver a cargar los mismos GPX.`,
-      confirm_clear_surf_cache: n => `¿Borrar también los ${n} análisis de terreno guardados?\n\n· Cancelar (recomendado): se conservan y se recuperarán solos al volver a cargar los mismos GPX.\n· Aceptar: se borran y habría que volver a consultar OpenStreetMap.`,
+      confirm_clear_surf_cache: n => `¿Borrar también los ${n} análisis de terreno guardados?\n\n· Cancelar (recomendado): se conservan y se recuperarán solos al volver a cargar los mismos GPX.\n· Aceptar: se borran (junto con los caminos de OpenStreetMap ya descargados) y habría que volver a consultarlos.`,
       loading_reading_gpx: (n) => `Leyendo ${n} archivo(s) GPX…`,
       loading_saving_routes: "Guardando rutas…",
       loading_reading_backup: "Leyendo copia de seguridad…",
@@ -692,10 +735,15 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       yr_streak_days: (n) => `${n} día(s) seguidos`,
       yr_longest_route: "Ruta más larga", yr_hardest_route: "Ruta más difícil",
       yr_by_type: "Reparto por tipo",
+      share: "Compartir…", share_native: "Compartir (imagen + texto)", share_email: "Email", share_copy: "Copiar texto",
+      share_download: "Descargar imagen", share_copied: "Texto copiado", share_title: (y) => `Mi año ${y} en Hinterway`,
+      share_text: (y, km, gain, n) => `Mi ${y} sobre ruedas: ${km} km, ${gain} m de desnivel y ${n} rutas. Resumen hecho con Hinterway.`,
+      share_note: "WhatsApp, Telegram, X, Facebook, LinkedIn y el email solo reciben el texto (y el enlace a la app). Para publicar la imagen, descárgala y adjúntala; en el móvil, \"Compartir (imagen + texto)\" la envía directamente.",
+      share_img_year: (y) => `Mi año ${y}`, share_img_km: "km", share_img_gain: "m de desnivel", share_img_routes: "rutas",
       yr_no_month: "—",
     },
     en: {
-      app_title: "🏔️ Route heatmap",
+      app_title: "🏔️ Hinterway",
       menu_data: "Data ▾", menu_filters: "Filters ▾", menu_panels: "Panels ▾", menu_info: "Info ▾", about: "About",
       add_gpx: "Add GPX", export_csv: "Export to CSV",
       backup_download: "Download backup", backup_restore: "Restore backup",
@@ -706,7 +754,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       filter_name: "Name", filter_name_ph: "Search by name…",
       filter_year: "Year", filter_type: "Activity type",
       all: "All", none: "None",
-      filter_km: "Distance (km)", filter_gain: "Elevation gain (m)", filter_idx: "Difficulty index",
+      filter_km: "Distance (km)", filter_gain: "Elevation gain (m)", filter_idx: "Difficulty index", route_intensity: "Route intensity",
       range_to: "to",
       empty_title: "No routes loaded yet",
       empty_text: "Select the GPX files from your folder (you can pick them all at once) and then say what type they are.",
@@ -744,8 +792,10 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       col_num: "#", col_route: "Route", col_date: "Date", col_type: "Type", col_km: "Km",
       col_gain: "Gain", col_idx: "Index", col_idr: "RDI", idr_label: "RDI (percentile in selection)",
       col_s_asf: "% Paved", col_s_pis: "% Track", col_s_sen: "% Trail",
+      rp_gain: "m gain", rp_moving: "moving", rp_index: "index", rp_type: "Activity type (saved when chosen)",
+      rp_no_terrain: "Terrain not analyzed (↻)", close: "Close",
       surf_label: "Terrain", surf_reanalyze_hint: "Click \"Re-analyze\" in the popup to see the terrain on the profile.", surf_asphalt: "Paved", surf_track: "Track", surf_path: "Trail", surf_nodata: "No data",
-      surf_analyze: "Analyze terrain", surf_reanalyze: "Re-analyze", surf_analyzing: "Analyzing terrain…",
+      surf_tiles: "areas", surf_analyze: "Analyze terrain", surf_reanalyze: "Re-analyze", surf_analyzing: "Analyzing terrain…",
       surf_analyze_all: "Analyze terrain (filtered routes)", surf_stop: "Stop", surf_close: "Close",
       surf_error: "The terrain could not be analyzed (the OpenStreetMap server is not responding or you are offline). Try again later.",
       surf_none_pending: "All routes matching the filters already have their terrain analyzed.",
@@ -786,7 +836,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       alert_db_blocked: "Another tab with an older version of this app is open. Close it so this one can update its saved data.",
       confirm_clear_all: "This deletes all routes loaded in this browser. Continue?",
       confirm_clear_surf_note: n => `${n} route(s) have their terrain analyzed. Next you can choose to keep those analyses so they come back when you load the same GPX files again.`,
-      confirm_clear_surf_cache: n => `Also delete the ${n} saved terrain analyses?\n\n· Cancel (recommended): they are kept and come back automatically when you load the same GPX files again.\n· OK: they are deleted and OpenStreetMap would have to be queried again.`,
+      confirm_clear_surf_cache: n => `Also delete the ${n} saved terrain analyses?\n\n· Cancel (recommended): they are kept and come back automatically when you load the same GPX files again.\n· OK: they are deleted (along with the OpenStreetMap ways already downloaded) and would have to be queried again.`,
       loading_reading_gpx: (n) => `Reading ${n} GPX file(s)…`,
       loading_saving_routes: "Saving routes…",
       loading_reading_backup: "Reading backup…",
@@ -808,6 +858,11 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       yr_streak_days: (n) => `${n} day(s) in a row`,
       yr_longest_route: "Longest route", yr_hardest_route: "Hardest route",
       yr_by_type: "Breakdown by type",
+      share: "Share…", share_native: "Share (image + text)", share_email: "Email", share_copy: "Copy text",
+      share_download: "Download image", share_copied: "Text copied", share_title: (y) => `My ${y} on Hinterway`,
+      share_text: (y, km, gain, n) => `My ${y} on wheels: ${km} km, ${gain} m of climbing and ${n} routes. Summary made with Hinterway.`,
+      share_note: "WhatsApp, Telegram, X, Facebook, LinkedIn and email only receive the text (and the link to the app). To post the image, download it and attach it; on mobile, \"Share (image + text)\" sends it directly.",
+      share_img_year: (y) => `My ${y}`, share_img_km: "km", share_img_gain: "m climbed", share_img_routes: "routes",
       yr_no_month: "—",
     },
   };
@@ -832,7 +887,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     renderHelp();
     if(!els("aboutModal").classList.contains("hidden")) renderAbout();
     rebuildFilterLists();
-    if(!els("elevPanel").classList.contains("hidden")) renderProfileView();
+    if(!els("elevPanel").classList.contains("hidden") && elevTrack){ renderRouteHead(elevTrack); renderProfileView(); }
     if(selectedLine && selectedLine._id){
       const t = tracks.find(tr2 => tr2.id === selectedLine._id);
       if(t) selectedLine.setPopupContent(popupHtml(t));
@@ -1169,23 +1224,61 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     }
   }
 
-  // Los caminos se piden por teselas fijas de ~3 x 3 km. Se guardan en memoria durante la sesión,
-  // así que rutas por la misma zona (lo habitual) reutilizan las teselas ya descargadas.
-  const TILE_LAT = 0.03, TILE_LON = 0.04, TILE_CACHE_MAX = 60;
+  // Los caminos se piden por teselas fijas de ~3 x 3 km y se guardan en dos sitios:
+  //  - en memoria durante la sesión (las últimas 60), y
+  //  - en el navegador (almacén "osmTiles"), en formato compacto, durante 180 días.
+  // Así las rutas por zonas ya consultadas (lo habitual) no vuelven a preguntar a OpenStreetMap.
+  const TILE_LAT = 0.03, TILE_LON = 0.04, TILE_CACHE_MAX = 60, TILE_MAX_AGE_DAYS = 180;
   const tileCache = new Map();
+  const encodeWays = ways => ways.map(w => [w.id, w.tags.highway || "", w.tags.surface || "",
+    w.geometry.flatMap(g => [Math.round(g.lat*1e6)/1e6, Math.round(g.lon*1e6)/1e6])]);
+  const decodeWays = arr => arr.map(([id, h, sf, flat]) => {
+    const geometry = []; for(let i=0;i<flat.length;i+=2) geometry.push({ lat:flat[i], lon:flat[i+1] });
+    const tags = { highway:h }; if(sf) tags.surface = sf;
+    return { id, tags, geometry };
+  });
+  async function tileDbGet(key){
+    try{
+      const db = await openDB();
+      const rec = await new Promise((res, rej) => {
+        const r = db.transaction(TILE_STORE, "readonly").objectStore(TILE_STORE).get(key);
+        r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+      });
+      if(!rec) return null;
+      if((Date.now() - rec.t) / 86400000 > TILE_MAX_AGE_DAYS) return null;
+      return decodeWays(rec.ways);
+    }catch(e){ return null; }
+  }
+  async function tileDbPut(key, ways){
+    try{
+      const db = await openDB();
+      await new Promise((res, rej) => {
+        const tx = db.transaction(TILE_STORE, "readwrite");
+        tx.objectStore(TILE_STORE).put({ key, t: Date.now(), ways: encodeWays(ways) });
+        tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+      });
+    }catch(e){}
+  }
+  function memCachePut(key, ways){
+    tileCache.set(key, ways);
+    if(tileCache.size > TILE_CACHE_MAX) tileCache.delete(tileCache.keys().next().value);
+  }
   async function waysForTile(key){
     if(tileCache.has(key)){ const v = tileCache.get(key); tileCache.delete(key); tileCache.set(key, v); return v; }
+    const stored = await tileDbGet(key);
+    if(stored){ memCachePut(key, stored); return stored; }
     const [ty, tx] = key.split(",").map(Number);
     const s = ty*TILE_LAT, w = tx*TILE_LON, n = s+TILE_LAT, e = w+TILE_LON;
     const q = `[out:json][timeout:60];way["highway"](${s.toFixed(4)},${w.toFixed(4)},${n.toFixed(4)},${e.toFixed(4)});out tags geom;`;
     const data = await overpassQuery(q);
-    const ways = data.elements.filter(el => el.geometry && !IGNORE_HW.test(el.tags.highway || ""));
-    tileCache.set(key, ways);
-    if(tileCache.size > TILE_CACHE_MAX) tileCache.delete(tileCache.keys().next().value);
+    const ways = data.elements.filter(el => el.geometry && !IGNORE_HW.test(el.tags.highway || ""))
+      .map(el => ({ id: el.id, tags: { highway: el.tags.highway, ...(el.tags.surface ? { surface: el.tags.surface } : {}) }, geometry: el.geometry }));
+    memCachePut(key, ways);
+    tileDbPut(key, ways);
     return ways;
   }
 
-  async function analyzeSurface(t){
+  async function analyzeSurface(t, onProgress){
     const base = (t.profile && t.profile.length >= 2 && t.profile[0].lat != null)
       ? t.profile.map(p => [p.lat, p.lon]) : t.pts;
     const pts = densifyPts(base, 15);
@@ -1195,12 +1288,19 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       for(const dla of [-M, M]) for(const dlo of [-M, M])
         tiles.add(Math.floor((la+dla)/TILE_LAT) + "," + Math.floor((lo+dlo)/TILE_LON));
     });
-    const waysById = new Map();
-    for(const key of tiles){
-      const cached = tileCache.has(key);
-      (await waysForTile(key)).forEach(el => waysById.set(el.id, el));
-      if(!cached) await sleep(1000);
+    // Hasta 2 teselas a la vez (Overpass permite varias consultas simultáneas por usuario).
+    const waysById = new Map(), keys = [...tiles];
+    let done = 0, next = 0;
+    if(onProgress) onProgress(0, keys.length);
+    async function worker(){
+      while(next < keys.length){
+        const key = keys[next++];
+        (await waysForTile(key)).forEach(el => waysById.set(el.id, el));
+        done++;
+        if(onProgress) onProgress(done, keys.length);
+      }
     }
+    await Promise.all([worker(), worker()]);
     const ways = [...waysById.values()];
 
     // Proyección plana local (metros) + rejilla de 50 m para buscar segmentos cercanos.
@@ -1283,23 +1383,31 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
         <div class="surf-legend">${SURF_KEYS.filter(k => pct[k]).map(k => `<i style="background:${SURF_COLORS[k]}"></i>${tr(SURF_I18N[k])} ${pct[k]} %`).join(" ")}</div></div>`;
     }
     const busy = surfBusy.has(t.id);
-    html += `<button class="ghost popup-surf-btn" data-id="${t.id}" ${busy ? "disabled" : ""} style="width:100%; margin-top:6px; padding:5px 8px; font-size:12px;">${busy ? tr("surf_analyzing") : tr(t.surface ? "surf_reanalyze" : "surf_analyze")}</button>`;
+    html += `<button class="ghost popup-surf-btn" data-id="${t.id}" ${busy ? "disabled" : ""} style="width:100%; margin-top:6px; padding:5px 8px; font-size:12px;">${busy ? tr("surf_analyzing") + (surfProgress.has(t.id) ? ` (${surfProgress.get(t.id)})` : "") : tr(t.surface ? "surf_reanalyze" : "surf_analyze")}</button>`;
     return html;
   }
 
   function refreshTrackPopup(t){
     routeLayer.eachLayer(l => { if(l._id === t.id) l.setPopupContent(popupHtml(t)); });
+    if(elevTrack && elevTrack.id === t.id && !els("elevPanel").classList.contains("hidden")) renderRouteHead(t);
   }
 
-  async function analyzeAndStore(t){
+  const surfProgress = new Map();   // id -> "3/6" (teselas descargadas)
+  async function analyzeAndStore(t, onProgress){
     surfBusy.add(t.id); refreshTrackPopup(t);
     try{
-      t.surface = await analyzeSurface(t);
+      t.surface = await analyzeSurface(t, (d, n) => {
+        surfProgress.set(t.id, `${d}/${n}`);
+        document.querySelectorAll(`.popup-surf-btn[data-id="${CSS.escape(t.id)}"]`).forEach(b => {
+          b.textContent = b.closest("#routeHead") ? `${d}/${n}` : `${tr("surf_analyzing")} (${d}/${n})`;
+        });
+        if(onProgress) onProgress(d, n);
+      });
       await dbPutAll([t]);
       try{ await surfCachePut([t]); }catch(e){}
       if(elevTrack && elevTrack.id === t.id && !els("elevPanel").classList.contains("hidden")) renderProfileView();
     } finally {
-      surfBusy.delete(t.id); refreshTrackPopup(t);
+      surfBusy.delete(t.id); surfProgress.delete(t.id); refreshTrackPopup(t);
     }
   }
 
@@ -1319,10 +1427,11 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     for(let i=0;i<pending.length && !surfBatchStop;i++){
       const t = pending[i];
       els("surfStatusText").textContent = tr("surf_progress", i+1, pending.length, t.name);
-      try{ await analyzeAndStore(t); ok++; }
+      try{ await analyzeAndStore(t, (d, n) => {
+        els("surfStatusText").textContent = tr("surf_progress", i+1, pending.length, t.name) + ` · ${tr("surf_tiles")} ${d}/${n}`;
+      }); ok++; }
       catch(e){ fail++; }
       if(!els("tableModal").classList.contains("hidden")) renderTable();
-      await sleep(1000);
     }
     els("surfStatusText").textContent = tr("surf_done", ok, fail, surfBatchStop);
     els("surfSpinner").classList.add("hidden"); els("surfStop").classList.add("hidden"); els("surfClose").classList.remove("hidden");
@@ -1397,10 +1506,99 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     return (b.ele - a.ele) / distM * 100;
   }
 
+  // ---------- ventana de la ruta ----------
+  // "nuevo": al pinchar una ruta NO se abre el popup; sus datos y acciones van en la cabecera de
+  //          la ventana del perfil.
+  // "antiguo": comportamiento anterior (popup sobre el mapa + ventana del perfil solo con el nombre).
+  // El popup sigue existiendo (popupHtml) y se puede volver a usar cambiando este valor.
+  const ROUTE_PANEL_STYLE = "nuevo";
+
+  function routeHeadHtml(t){
+    const idx = difficultyIndex(t), idr = relativeIndex(t);
+    const fmt1 = v => v.toLocaleString(LOC(), { minimumFractionDigits:1, maximumFractionDigits:1 });
+    const dateTxt = t.date ? new Date(t.date + "T12:00:00").toLocaleDateString(LOC(), { day:"numeric", month:"short", year:"numeric" }) : "";
+    const color = typeColors.get(t.type || "Desconocido") || "#ff5a1f";
+    const stat = (v, l) => `<div class="rp-stat"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+    const st = [
+      stat(fmt1(t.km), "km"),
+      stat(Math.round(t.gain).toLocaleString(LOC()), tr("rp_gain")),
+      stat(t.duration ? formatDuration(t.duration) : "—", tr("rp_moving")),
+      stat(t.duration ? fmt1(t.km/(t.duration/3600)) : "—", "km/h"),
+      stat(idx != null ? idx : "—", tr("rp_index")),
+      stat(idr != null ? idr : "—", tr("col_idr")),
+    ].join("");
+    let terrain;
+    if(t.surface){
+      const pct = Object.fromEntries(SURF_KEYS.map(k => [k, surfacePct(t,k) || 0]));
+      terrain = `<div class="bar">${SURF_KEYS.map(k => pct[k] ? `<span style="width:${pct[k]}%;background:${SURF_COLORS[k]}"></span>` : "").join("")}</div>
+        <div class="lg">${SURF_KEYS.filter(k => pct[k]).map(k => `<i style="background:${SURF_COLORS[k]}"></i>${tr(SURF_I18N[k])} ${pct[k]} %`).join(" ")}</div>`;
+    } else {
+      terrain = `<div class="lg">${tr("rp_no_terrain")}</div>`;
+    }
+    const busy = surfBusy.has(t.id);
+    const surfLabel = busy ? (surfProgress.get(t.id) || "…") : "↻";
+    const nameEsc = String(t.name).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+    return `
+      <div class="rp-id">
+        <div class="rp-name" title="${nameEsc.replace(/"/g,"&quot;")}">${nameEsc}</div>
+        <div class="rp-rename popup-rename-row hidden" data-id="${t.id}">
+          <input type="text" class="popup-rename-input" data-id="${t.id}" value="${String(t.name).replace(/"/g,"&quot;")}">
+          <button class="ghost popup-rename-save" data-id="${t.id}">✓</button>
+        </div>
+        <div class="rp-sub">${dateTxt ? `<span>${dateTxt}</span>·` : ""}<span class="dot" style="background:${color}"></span><span title="${t.type || ""}">${t.type || "Desconocido"}</span></div>
+      </div>
+      <div class="rp-stats">${st}</div>
+      <div class="rp-terrain">${terrain}</div>
+      <div class="rp-actions">
+        <select class="popup-type-select" data-id="${t.id}" title="${tr("rp_type")}">${typeOptionsHtml(t.type)}</select>
+        <input type="text" class="popup-type-new hidden" data-id="${t.id}" placeholder="${tr("new_type_ph")}">
+        <button class="ghost popup-rename-btn" data-id="${t.id}" title="${tr("rename")}">✎</button>
+        <button class="ghost popup-surf-btn" data-id="${t.id}" ${busy ? "disabled" : ""} title="${tr(t.surface ? "surf_reanalyze" : "surf_analyze")}">${surfLabel}</button>
+        <button class="ghost danger popup-delete-btn" data-id="${t.id}" title="${tr("delete_route")}">🗑</button>
+        <button class="ghost elev-close-btn" title="${tr("close")}">✕</button>
+      </div>`;
+  }
+  function renderRouteHead(t){
+    const nuevo = ROUTE_PANEL_STYLE === "nuevo";
+    els("elevHeaderOld").classList.toggle("hidden", nuevo);
+    els("routeHead").classList.toggle("hidden", !nuevo);
+    if(nuevo) els("routeHead").innerHTML = routeHeadHtml(t);
+  }
+
+  function selectRoute(line, t){
+    if(selectedLine && selectedLine !== line) selectedLine.setStyle(selectedLine._baseStyle);
+    selectedLine = line;
+    line.setStyle({ color:"#39ff14", weight:5.5, opacity:1 });
+    line.bringToFront();
+    drawElevationProfile(t);
+    zoomToRoute(line);
+  }
+  // Amplía y centra el mapa en la ruta, dejando libre la parte que tapa la ventana de abajo.
+  function zoomToRoute(line){
+    const b = line.getBounds();
+    if(!b.isValid()) return;
+    const panel = els("elevPanel");
+    const bottom = panel.classList.contains("hidden") ? 30 : panel.offsetHeight + 20;
+    map.fitBounds(b, { paddingTopLeft:[40, 40], paddingBottomRight:[40, bottom], maxZoom:16 });
+  }
+  function deselectRoute(){
+    if(selectedLine){ selectedLine.setStyle(selectedLine._baseStyle); selectedLine.closePopup(); selectedLine = null; }
+    hideElevationProfile();
+  }
+  // Tras redibujar el mapa (renombrar, cambiar tipo…), vuelve a seleccionar la ruta que estaba abierta.
+  function reselectById(id){
+    if(!id || ROUTE_PANEL_STYLE !== "nuevo") return;
+    const t = tracks.find(x => x.id === id);
+    let found = null;
+    routeLayer.eachLayer(l => { if(l._id === id) found = l; });
+    if(t && found) selectRoute(found, t);
+  }
+
   function drawElevationProfile(t){
     elevTrack = t;
     elevZoomRange = null;
     els("elevPanel").classList.remove("hidden");
+    renderRouteHead(t);
     renderProfileView();
   }
 
@@ -1521,15 +1719,57 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   }
 
   let segmentLine = null;
+  // Resaltado en el mapa del tramo seleccionado en el perfil.
+  // Estilos: "borde" (la ruta verde con bordes amarillos), "halo" (línea amarilla con borde oscuro), "pendiente" (coloreado por pendiente, como el
+  // perfil ampliado) o "atenuar" (el resto de la ruta se apaga y el tramo va en blanco con marcas de inicio y fin).
+  let SEGMENT_STYLE = "borde";
+  function gradeColor(g){
+    if(g <= -3) return "#2f9bff";
+    if(g <= 1) return "#39ff6a";
+    if(g <= 5) return "#ffd400";
+    if(g <= 9) return "#ff8a1f";
+    if(g <= 12) return "#ff2d2d";
+    return "#000000";
+  }
   function updateSegmentHighlight(){
     if(segmentLine){ map.removeLayer(segmentLine); segmentLine = null; }
+    if(selectedLine) selectedLine.setStyle({ opacity:1 });
     if(!elevZoomRange || !activeProfile) return;
-    const latlngs = activeProfile.valid.map(p => [p.lat, p.lon]);
-    segmentLine = L.polyline(latlngs, {
-      color:"#ffffff", weight:7, opacity:0.9, dashArray:"1,8", lineCap:"round",
-      renderer:sharedRenderer, interactive:false,
-    }).addTo(map);
-    segmentLine.bringToFront();
+    const v = activeProfile.valid;
+    const latlngs = v.map(p => [p.lat, p.lon]);
+    const opt = { renderer:sharedRenderer, interactive:false, lineCap:"round", lineJoin:"round" };
+    const g = L.layerGroup();
+    const outline = L.polyline(latlngs, { ...opt, color:"#0b1020", weight:11, opacity:0.85 });
+    if(SEGMENT_STYLE === "pendiente"){
+      g.addLayer(outline);
+      for(let i=1;i<v.length;i++){
+        const distM = Math.max(1, (v[i].km - v[i-1].km)*1000);
+        const grade = (v[i].ele - v[i-1].ele) / distM * 100;
+        g.addLayer(L.polyline([[v[i-1].lat, v[i-1].lon],[v[i].lat, v[i].lon]], { ...opt, color:gradeColor(grade), weight:6, opacity:1 }));
+      }
+    } else if(SEGMENT_STYLE === "atenuar"){
+      if(selectedLine) selectedLine.setStyle({ opacity:0.35 });
+      g.addLayer(outline);
+      g.addLayer(L.polyline(latlngs, { ...opt, color:"#ffffff", weight:6, opacity:1 }));
+      const mk = (ll, fill) => L.circleMarker(ll, { renderer:sharedRenderer, interactive:false, radius:7, color:"#0b1020", weight:3, fillColor:fill, fillOpacity:1 });
+      g.addLayer(mk(latlngs[0], "#39ff6a"));
+      g.addLayer(mk(latlngs[latlngs.length-1], "#ff2d2d"));
+    } else if(SEGMENT_STYLE === "halo"){
+      g.addLayer(outline);
+      g.addLayer(L.polyline(latlngs, { ...opt, color:"#ffd400", weight:6, opacity:1 }));
+    } else {
+      // "borde": línea amarilla más ancha debajo y la ruta (verde) encima, de modo que solo se ven los bordes amarillos.
+      g.addLayer(L.polyline(latlngs, { ...opt, color:"#ffd400", weight:12, opacity:0.85 }));
+      g.addLayer(L.polyline(latlngs, { ...opt, color:"#39ff14", weight:5.5, opacity:1 }));
+    }
+    segmentLine = g.addTo(map);
+    g.eachLayer(l => l.bringToFront && l.bringToFront());
+    // Amplía y centra el mapa en el tramo, dejando libre la ventana de abajo.
+    const b = L.latLngBounds(latlngs);
+    if(b.isValid()){
+      const bottom = els("elevPanel").offsetHeight + 20;
+      map.fitBounds(b, { paddingTopLeft:[40, 40], paddingBottomRight:[40, bottom], maxZoom:17 });
+    }
   }
 
 
@@ -1547,11 +1787,13 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     hideElevationProfile();
     if(selectedLine){ selectedLine.closePopup(); }
   });
+  els("routeHead").addEventListener("click", e => { if(e.target.closest(".elev-close-btn")) deselectRoute(); });
   document.body.addEventListener("click", e => {
     if(e.target.matches(".elev-reset-zoom")){
       e.preventDefault();
       elevZoomRange = null;
       renderProfileView();
+      if(selectedLine) zoomToRoute(selectedLine);
     }
   });
 
@@ -1602,11 +1844,12 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     tip.classList.remove("hidden");
     if(!hoverMarker){
       hoverMarker = L.circleMarker([nearest.lat, nearest.lon], {
-        radius:7, color:"#39ff14", weight:2, fillColor:"#39ff14", fillOpacity:0.9, renderer:sharedRenderer,
+        radius:5.5, color:"#0b1020", weight:2.5, fillColor:"#ff7a63", fillOpacity:1, renderer:sharedRenderer,
       }).addTo(map);
     } else {
       hoverMarker.setLatLng([nearest.lat, nearest.lon]);
     }
+    hoverMarker.bringToFront();   // siempre por encima del tramo resaltado
   });
   window.addEventListener("mouseup", e => {
     if(elevDragStartKm == null || !activeProfile) return;
@@ -1628,12 +1871,31 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   });
 
 
+  // Opacidad de las rutas: automática según cuántas hay (más rutas, más transparentes, para que
+  // se note dónde se acumulan), con un mínimo para que una ruta suelta se siga viendo bien, y
+  // multiplicada por el control "Intensidad de las rutas" (5 = normal).
+  let routeIntensity = 5;
+  try{ const v = parseInt(localStorage.getItem("heatmap-route-intensity"), 10); if(v >= 1 && v <= 10) routeIntensity = v; }catch(e){}
+  function routeOpacity(n){
+    const auto = Math.max(0.45, Math.min(0.85, 8/Math.max(n,1)));
+    return Math.max(0.08, Math.min(1, auto * routeIntensity / 5));
+  }
+  function applyRouteIntensity(){
+    let n = 0; routeLayer.eachLayer(() => n++);
+    const opacity = routeOpacity(n);
+    routeLayer.eachLayer(l => {
+      if(!l._baseStyle) return;
+      l._baseStyle = { ...l._baseStyle, opacity };
+      if(l !== selectedLine) l.setStyle(l._baseStyle);
+    });
+  }
+
   let selectedLine = null;
   function redrawMap(list){
     routeLayer.clearLayers();
     selectedLine = null;
     hideElevationProfile();
-    const opacity = Math.max(0.25, Math.min(0.85, 8/Math.max(list.length,1)));
+    const opacity = routeOpacity(list.length);
     list.forEach(t => {
       if(t.pts.length < 2) return;
       const color = typeColors.get(t.type || "Desconocido") || "#ff5a1f";
@@ -1642,17 +1904,13 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       line._id = t.id;
       line._baseStyle = baseStyle;
       line.bindPopup(popupHtml(t));
-      line.on("click", () => {
-        if(selectedLine && selectedLine !== line) selectedLine.setStyle(selectedLine._baseStyle);
-        selectedLine = line;
-        line.setStyle({ color:"#39ff14", weight:5.5, opacity:1 });
-        line.bringToFront();
-        drawElevationProfile(t);
-      });
+      // Con la ventana "nueva" el popup sigue enlazado pero no se abre al pinchar.
+      if(ROUTE_PANEL_STYLE === "nuevo") line.off("click", line._openPopup, line);
+      line.on("click", () => selectRoute(line, t));
       line.on("popupclose", () => {
         if(selectedLine === line){ line.setStyle(line._baseStyle); selectedLine = null; hideElevationProfile(); }
       });
-      line.on("mouseover", () => { if(line !== selectedLine) line.setStyle({ weight:6, opacity:Math.min(1, opacity+0.3) }); });
+      line.on("mouseover", () => { if(line !== selectedLine) line.setStyle({ weight:6, opacity:Math.min(1, line._baseStyle.opacity+0.3) }); });
       line.on("mouseout", () => { if(line !== selectedLine) line.setStyle(line._baseStyle); });
     });
     if(list.length){
@@ -1707,6 +1965,18 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   let paletteIdx = 0;
   function nextColor(){ return palette[(paletteIdx++) % palette.length]; }
 
+  // Máximos de los filtros de rango puestos automáticamente. Si el usuario no los ha tocado
+  // (siguen valiendo lo que puso la app), se actualizan al añadir o borrar rutas; si los ha
+  // cambiado a mano, se respetan.
+  const autoMax = {};
+  function setAutoMax(id, value){
+    const input = els(id);
+    if(input.value === "" || (autoMax[id] != null && parseFloat(input.value) === autoMax[id])){
+      input.value = value;
+      autoMax[id] = value;
+    }
+  }
+
   function rebuildFilterLists(){
     const years = [...new Set(tracks.map(t=>t.year).filter(y=>y!=null))].sort((a,b)=>b-a);
     const types = [...new Set(tracks.map(t=>t.type || "Desconocido"))].sort();
@@ -1734,13 +2004,13 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     if(tracks.length){
       const kms = tracks.map(t=>t.km), gains = tracks.map(t=>t.gain);
       if(els("kmMin").value === "") els("kmMin").value = 0;
-      if(els("kmMax").value === "") els("kmMax").value = Math.ceil(Math.max(...kms));
+      setAutoMax("kmMax", Math.ceil(Math.max(...kms)));
       if(els("elMin").value === "") els("elMin").value = 0;
-      if(els("elMax").value === "") els("elMax").value = Math.ceil(Math.max(...gains));
+      setAutoMax("elMax", Math.ceil(Math.max(...gains)));
       const idxs = tracks.map(difficultyIndex).filter(i => i != null);
       if(idxs.length){
         if(els("idxMin").value === "") els("idxMin").value = 0;
-        if(els("idxMax").value === "") els("idxMax").value = Math.ceil(Math.max(...idxs));
+        setAutoMax("idxMax", Math.ceil(Math.max(...idxs)));
       }
     }
     readRangeInputs();
@@ -1846,6 +2116,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     rebuildFilterLists();
     applyFiltersAndRedraw();
     if(selectedLine) selectedLine.setPopupContent(popupHtml(t));
+    reselectById(id);
   }
 
   async function deleteTrack(id){
@@ -1876,6 +2147,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     map.closePopup();
     rebuildFilterLists();
     applyFiltersAndRedraw();
+    reselectById(id);
   }
 
   // ---------- carga de archivos ----------
@@ -1981,31 +2253,33 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   const HELP_HTML = {
     es: `
       <ul style="margin:0 0 10px; padding-left:18px;">
-        <li><strong>Menú superior:</strong> <em>Datos</em> (añadir GPX, exportar CSV, copia de seguridad, vaciar todo), <em>Filtros</em> (mostrar/ocultar panel, restablecer) <em>Paneles</em> (gráficos, récords, calendario, tabla) e <em>Info</em> (esta ayuda y Quiénes somos). Las banderas cambian el idioma.</li>
+        <li><strong>Menú superior:</strong> <em>Datos</em> (añadir GPX, exportar CSV, copia de seguridad, analizar terreno, vaciar todo), <em>Filtros</em> (mostrar/ocultar panel, restablecer), <em>Paneles</em> (gráficos, récords, calendario, tabla, resumen anual) e <em>Info</em> (esta ayuda y Quiénes somos). Las banderas cambian el idioma.</li>
         <li><strong>Añadir rutas</strong> desde Datos → Añadir GPX, seleccionando varios archivos a la vez; se guardan en este navegador. Si el GPX no trae el tipo, te lo pregunta; ese tipo asignado a varios archivos de golpe solo se guarda en la aplicación. Si luego cambias el tipo, renombras o borras una ruta concreta desde su popup, con Chrome o Edge ese cambio sí se graba también en su archivo GPX (pidiéndote confirmar el permiso una vez, por ser un solo archivo).</li>
-        <li><strong>Filtros</strong> (panel izquierdo): nombre, año, tipo (con su color, que puedes cambiar), distancia, desnivel e índice de dificultad. Se combinan entre sí y afectan al mapa y a los totales de la cabecera.</li>
-        <li><strong>Una ruta en el mapa:</strong> al pincharla se resalta y se abre su popup (datos, cambiar tipo, renombrar, borrar) y, abajo, su perfil de elevación. Arrastra sobre el perfil para ampliar un tramo y ver su pendiente coloreada por sectores; pasa el ratón para ver km, altitud y pendiente de cada punto.</li>
+        <li><strong>Filtros</strong> (panel izquierdo): nombre, año, tipo (con su color, que puedes cambiar), distancia, desnivel e índice de dificultad. Se combinan entre sí y afectan al mapa y a los totales de la cabecera. Al añadir rutas nuevas, los máximos de distancia, desnivel e índice se amplían solos, salvo que los hayas cambiado a mano. Debajo, <em>Intensidad de las rutas</em> (1 a 10, normal 5) pinta las rutas más fuertes o más suaves; el valor se recuerda.</li>
+        <li><strong>Una ruta en el mapa:</strong> al pincharla se resalta y se abre abajo su ventana: nombre, fecha y tipo; sus cifras (km, desnivel, tiempo, velocidad, índice e IDR); el terreno; los botones para cambiar el tipo (se guarda al elegirlo), renombrar (✎), analizar el terreno (↻), borrar (🗑) y cerrar (✕); y su perfil de elevación. Arrastra sobre el perfil para ampliar un tramo y ver su pendiente coloreada por sectores; pasa el ratón para ver km, altitud, pendiente y tipo de terreno de cada punto. Si la ruta tiene el terreno analizado, una franja de colores bajo el perfil marca los tramos de asfalto, pista y senda.</li>
         <li><strong>Mapa y capas:</strong> el icono de capas (arriba a la derecha) cambia el fondo del mapa y activa o desactiva las rutas y la capa de densidad (heatmap).</li>
-        <li><strong>Paneles:</strong> Gráficos (evolución mensual o anual), Récords y Top 10 (ordenable), Calendario de actividad (un cuadradito por día) y Tabla de rutas (ordenable por columna). Todos usan las rutas que cumplen los filtros activos.</li>
+        <li><strong>Paneles:</strong> Gráficos (evolución mensual o anual), Récords y Top 10, Calendario de actividad (un cuadradito por día), Tabla de rutas y Resumen anual. Todos usan las rutas que cumplen los filtros activos. En el Top 10 y en la Tabla se ordena pulsando el título de la columna (otra vez para invertir); en la Tabla, si un nombre no cabe, pasa el ratón para verlo entero.</li>
+        <li><strong>Compartir el resumen anual:</strong> en Paneles → Resumen anual, "Compartir…" genera una imagen con las cifras del año (sin nombres de rutas) y ofrece WhatsApp, Telegram, X, email, copiar el texto o descargar la imagen; Facebook y LinkedIn solo aparecen si abres la app desde su dirección web. En el móvil, "Compartir (imagen + texto)" envía la imagen directamente a cualquier app; en los demás casos solo se envía el texto y la imagen hay que adjuntarla.</li>
         <li><strong>Datos:</strong> exporta a CSV, o haz una copia de seguridad completa (y restáurala) desde el menú Datos. "Vaciar todos los datos" borra todo lo guardado en este navegador.</li>
       </ul>
       <p><strong>Cómo se calcula:</strong> el desnivel suma subidas de más de 2 m tras limpiar la altitud de aberraciones; el tiempo en movimiento descuenta los tramos a menos de 0,3 m/s; el índice de dificultad es desnivel/10 + km + horas en movimiento × 25 (si no hay tiempo calculable, sale "Sin índice"). El IDR (índice de dificultad relativo) es el percentil de ese índice dentro de las rutas que cumplen los filtros activos: un IDR de 70 significa que la ruta es igual o más difícil que el 70 % de la selección, y la más difícil tiene 100. Por eso cambia al cambiar los filtros.</p>
-      <p><strong>Terreno:</strong> el botón "Analizar terreno" del popup (o Datos → Analizar terreno) descarga de OpenStreetMap los caminos de la zona, ajusta la traza a ellos y calcula qué parte va por asfalto, pista, senda o sin datos (a más de 25 m de cualquier camino). Para ello se envía a OpenStreetMap la zona de la ruta (no la traza). Refleja los caminos tal como están hoy en OpenStreetMap, no cuando hiciste la ruta. El resultado se guarda con la ruta y entra en la copia de seguridad. Además se guarda una copia aparte, que se conserva al vaciar los datos (salvo que elijas borrarla) y se recupera sola al volver a cargar el mismo GPX.</p>
-      <p style="margin-bottom:0;"><strong>Privacidad:</strong> tus rutas se guardan solo en este navegador, nunca se suben a ningún servidor. Si cambias de navegador o lo limpias, haz antes una copia de seguridad.</p>
+      <p><strong>Terreno:</strong> el botón "Analizar terreno" del popup (o Datos → Analizar terreno) descarga de OpenStreetMap los caminos de la zona, ajusta la traza a ellos y calcula qué parte va por asfalto, pista, senda o sin datos (a más de 25 m de cualquier camino). Para ello se envía a OpenStreetMap la zona de la ruta (no la traza). Refleja los caminos tal como están hoy en OpenStreetMap, no cuando hiciste la ruta. El resultado se guarda con la ruta y entra en la copia de seguridad. Además se guarda una copia aparte, que se conserva al vaciar los datos (salvo que elijas borrarla) y se recupera sola al volver a cargar el mismo GPX. Los caminos descargados de cada zona también se guardan en el navegador durante 180 días, así que analizar otras rutas por zonas ya consultadas es casi instantáneo; la primera ruta de cada zona nueva es la que más tarda, y depende de lo cargado que esté el servidor público de OpenStreetMap.</p>
+      <p style="margin-bottom:0;"><strong>Privacidad:</strong> tus rutas se guardan solo en este navegador, nunca se suben a ningún servidor; solo sale lo que tú decidas compartir. Si cambias de navegador o lo limpias, haz antes una copia de seguridad.</p>
     `,
     en: `
       <ul style="margin:0 0 10px; padding-left:18px;">
-        <li><strong>Top menu:</strong> <em>Data</em> (add GPX, export CSV, backup, clear all), <em>Filters</em> (show/hide panel, reset) <em>Panels</em> (charts, records, calendar, table) and <em>Info</em> (this help and About). The flags switch the language.</li>
+        <li><strong>Top menu:</strong> <em>Data</em> (add GPX, export CSV, backup, analyze terrain, clear all), <em>Filters</em> (show/hide panel, reset), <em>Panels</em> (charts, records, calendar, table, year in review) and <em>Info</em> (this help and About). The flags switch the language.</li>
         <li><strong>Add routes</strong> from Data → Add GPX, picking several files at once; they're saved in this browser. If a GPX has no type, you'll be asked; a type assigned to many files at once is only saved in the app. If you later change the type, rename, or delete one specific route from its popup, with Chrome or Edge that change is also written to its GPX file (asking you to confirm the permission once, since it's a single file).</li>
-        <li><strong>Filters</strong> (left panel): name, year, type (with its own color, which you can change), distance, elevation gain and difficulty index. They all combine and affect the map and the header totals.</li>
-        <li><strong>A route on the map:</strong> clicking it highlights it and opens its popup (data, change type, rename, delete) and, below, its elevation profile. Drag over the profile to zoom into a section and see its gradient colored by sector; hover to see the km, altitude and gradient at any point.</li>
+        <li><strong>Filters</strong> (left panel): name, year, type (with its own color, which you can change), distance, elevation gain and difficulty index. They all combine and affect the map and the header totals. When you add new routes, the distance, gain and index maximums widen automatically unless you changed them by hand. Below them, <em>Route intensity</em> (1 to 10, normal 5) draws the routes stronger or softer; the value is remembered.</li>
+        <li><strong>A route on the map:</strong> clicking it highlights it and opens its panel at the bottom: name, date and type; its figures (km, gain, time, speed, index and RDI); the terrain; buttons to change the type (saved when chosen), rename (✎), analyze terrain (↻), delete (🗑) and close (✕); and its elevation profile. Drag over the profile to zoom into a section and see its gradient colored by sector; hover to see the km, altitude, gradient and terrain type at any point. If the route's terrain has been analyzed, a colored strip under the profile marks the paved, track and trail sections.</li>
         <li><strong>Map and layers:</strong> the layers icon (top right) changes the map background and toggles the routes and density (heatmap) layers.</li>
-        <li><strong>Panels:</strong> Charts (monthly or yearly trends), Records & Top 10 (sortable), Activity calendar (one square per day) and Route table (sortable by column). All of them use the routes matching the active filters.</li>
+        <li><strong>Panels:</strong> Charts (monthly or yearly trends), Records & Top 10, Activity calendar (one square per day), Route table and Year in review. All of them use the routes matching the active filters. In the Top 10 and the Table, click a column title to sort (again to reverse); in the Table, hover over a name that doesn't fit to see it in full.</li>
+        <li><strong>Sharing the year in review:</strong> in Panels → Year in review, "Share…" creates an image with the year's figures (no route names) and offers WhatsApp, Telegram, X, email, copy the text or download the image; Facebook and LinkedIn only appear when you open the app from its web address. On mobile, "Share (image + text)" sends the image straight to any app; otherwise only the text is sent and the image has to be attached.</li>
         <li><strong>Data:</strong> export to CSV, or make a full backup (and restore it) from the Data menu. "Clear all data" deletes everything saved in this browser.</li>
       </ul>
       <p><strong>How it's calculated:</strong> elevation gain adds climbs of more than 2 m after cleaning up altitude glitches; moving time excludes sections under 0.3 m/s; the difficulty index is gain/10 + km + moving hours × 25 (shown as "No index" when no time can be calculated). The RDI (relative difficulty index) is that index's percentile within the routes matching the active filters: an RDI of 70 means the route is as hard as or harder than 70% of the selection, and the hardest one gets 100. That's why it changes when you change the filters.</p>
-      <p><strong>Terrain:</strong> the "Analyze terrain" button in the popup (or Data → Analyze terrain) downloads the ways in the area from OpenStreetMap, matches the track to them and works out how much is paved, track, trail or no data (more than 25 m from any way). Only the route's area (not the track) is sent to OpenStreetMap. It reflects the ways as they are in OpenStreetMap today, not when you rode. The result is saved with the route and included in the backup. A separate copy is also kept, which survives clearing the data (unless you choose to delete it) and comes back automatically when you load the same GPX again.</p>
-      <p style="margin-bottom:0;"><strong>Privacy:</strong> your routes are stored only in this browser and never uploaded to any server. If you switch or clear your browser, back up first.</p>
+      <p><strong>Terrain:</strong> the "Analyze terrain" button in the popup (or Data → Analyze terrain) downloads the ways in the area from OpenStreetMap, matches the track to them and works out how much is paved, track, trail or no data (more than 25 m from any way). Only the route's area (not the track) is sent to OpenStreetMap. It reflects the ways as they are in OpenStreetMap today, not when you rode. The result is saved with the route and included in the backup. A separate copy is also kept, which survives clearing the data (unless you choose to delete it) and comes back automatically when you load the same GPX again. The ways downloaded for each area are also kept in the browser for 180 days, so analyzing other routes in areas already queried is almost instant; the first route in each new area is the slowest, and it depends on how busy the public OpenStreetMap server is.</p>
+      <p style="margin-bottom:0;"><strong>Privacy:</strong> your routes are stored only in this browser and never uploaded to any server; only what you choose to share leaves it. If you switch or clear your browser, back up first.</p>
     `,
   };
   function renderHelp(){
@@ -2020,14 +2294,14 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   const APP_AUTHOR = "Angel Herrero", APP_EMAIL = "angelherreropla@gmail.com";
   const ABOUT_HTML = {
     es: () => `
-      <p><strong>Heatmap de rutas</strong> es una aplicación para ver en un mapa todas tus rutas GPX a la vez, como un mapa de calor de por dónde has pasado, y analizarlas: filtros por año, tipo, distancia, desnivel y dificultad, gráficos, récords, calendario, perfil de cada ruta y tipo de terreno.</p>
+      <p><strong>Hinterway</strong> es una aplicación para ver en un mapa todas tus rutas GPX a la vez, como un mapa de calor de por dónde has pasado, y analizarlas: filtros por año, tipo, distancia, desnivel y dificultad, gráficos, récords, calendario, perfil de cada ruta y tipo de terreno.</p>
       <p><strong>Autor:</strong> ${APP_AUTHOR}<br>
       <strong>Contacto:</strong> <a href="mailto:${APP_EMAIL}" style="color:var(--accent-2);">${APP_EMAIL}</a></p>
       <p><strong>Privacidad:</strong> tus rutas no salen de tu navegador: se leen y se guardan solo en este equipo, sin cuentas ni servidores propios. La única consulta externa con datos de tus rutas es el análisis de terreno, que pide a OpenStreetMap (Overpass) los caminos de la zona por la que pasa la ruta, sin enviar la traza. Los fondos de mapa se descargan de los servidores de cada proveedor.</p>
       <p><strong>Créditos:</strong> datos de mapa © colaboradores de <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" style="color:var(--accent-2);">OpenStreetMap</a> (licencia ODbL); análisis de terreno con la API Overpass; capas de <a href="https://opentopomap.org" target="_blank" rel="noopener" style="color:var(--accent-2);">OpenTopoMap</a>, <a href="https://www.cyclosm.org" target="_blank" rel="noopener" style="color:var(--accent-2);">CyclOSM</a> y Esri (satélite); mapa con Leaflet y Leaflet.heat; gráficos con Chart.js.</p>
       <p style="margin-bottom:0; color:var(--text-dim);">Versión ${APP_VERSION} · ${APP_VERSION_DATE}</p>`,
     en: () => `
-      <p><strong>Route heatmap</strong> is an app to see all your GPX routes on one map at once, as a heatmap of where you have been, and analyze them: filters by year, type, distance, elevation gain and difficulty, charts, records, calendar, each route's elevation profile and terrain type.</p>
+      <p><strong>Hinterway</strong> is an app to see all your GPX routes on one map at once, as a heatmap of where you have been, and analyze them: filters by year, type, distance, elevation gain and difficulty, charts, records, calendar, each route's elevation profile and terrain type.</p>
       <p><strong>Author:</strong> ${APP_AUTHOR}<br>
       <strong>Contact:</strong> <a href="mailto:${APP_EMAIL}" style="color:var(--accent-2);">${APP_EMAIL}</a></p>
       <p><strong>Privacy:</strong> your routes never leave your browser: they are read and stored only on this device, with no accounts or servers of our own. The only external request involving your routes is the terrain analysis, which asks OpenStreetMap (Overpass) for the ways in the area the route goes through, without sending the track. Map backgrounds are downloaded from each provider's servers.</p>
@@ -2130,6 +2404,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     state.years.clear(); state.types.clear();
     els("kmMin").value=""; els("kmMax").value=""; els("elMin").value=""; els("elMax").value="";
     els("idxMin").value=""; els("idxMax").value=""; els("nameFilter").value="";
+    Object.keys(autoMax).forEach(k => delete autoMax[k]);
     rebuildFilterLists();
     applyFiltersAndRedraw();
   });
@@ -2143,6 +2418,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     els("idxMin").value = 0;
     els("idxMax").value = idxs.length ? Math.ceil(Math.max(...idxs)) : "";
     els("nameFilter").value = "";
+    ["kmMax","elMax","idxMax"].forEach(id => { autoMax[id] = els(id).value === "" ? null : parseFloat(els(id).value); });
     document.querySelectorAll("#yearList input[type=checkbox]").forEach(i=>{ i.checked=true; state.years.add(parseInt(i.dataset.year,10)); });
     document.querySelectorAll("#typeList input[type=checkbox]").forEach(i=>{ i.checked=true; state.types.add(i.dataset.type); });
     readRangeInputs();
@@ -2177,7 +2453,14 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     } else if(e.target.matches(".popup-rename-btn")){
       const id = e.target.dataset.id;
       const row = document.querySelector(`.popup-rename-row[data-id="${CSS.escape(id)}"]`);
-      if(row) row.classList.toggle("hidden");
+      if(row){
+        row.classList.toggle("hidden");
+        const head = row.closest("#routeHead");
+        if(head){
+          head.querySelector(".rp-name").classList.toggle("hidden", !row.classList.contains("hidden"));
+          if(!row.classList.contains("hidden")){ const inp = row.querySelector("input"); inp.focus(); inp.select(); }
+        }
+      }
     } else if(e.target.matches(".popup-rename-save")){
       const id = e.target.dataset.id;
       const input = document.querySelector(`.popup-rename-input[data-id="${CSS.escape(id)}"]`);
@@ -2205,6 +2488,11 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       const id = e.target.dataset.id;
       const newInput = document.querySelector(`.popup-type-new[data-id="${CSS.escape(id)}"]`);
       if(newInput) newInput.classList.toggle("hidden", e.target.value !== "__new__");
+      // En la ventana de la ruta, el tipo se guarda al elegirlo (sin botón "Guardar").
+      if(e.target.closest("#routeHead")){
+        if(e.target.value === "__new__"){ if(newInput) newInput.focus(); }
+        else applyTypeChange(id, e.target.value);
+      }
     }
   });
 
@@ -2380,7 +2668,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     let found = null;
     routeLayer.eachLayer(l => { if(l._id === id) found = l; });
     closeRecords();
-    if(found){ map.fitBounds(found.getBounds(), { padding:[40,40], maxZoom:15 }); setTimeout(() => found.fire("click"), 260); }
+    if(found) found.fire("click");   // al seleccionarla, el mapa se ajusta a la ruta
   }
 
 
@@ -2426,7 +2714,8 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     if(years.includes(prev)) sel.value = prev; else if(years.length) sel.value = years[0];
 
     const body = els("yrBody");
-    if(!years.length){ body.innerHTML = `<p class="stats-info">${tr("yr_no_routes")}</p>`; return; }
+    els("sharePanel").classList.add("hidden");
+    if(!years.length){ yrSummary = null; body.innerHTML = `<p class="stats-info">${tr("yr_no_routes")}</p>`; return; }
 
     const year = sel.value;
     const list = list0.filter(t => t.date.slice(0,4) === year);
@@ -2460,6 +2749,9 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
         <div class="bar"><div style="width:${pct}%; background:${color};"></div></div><span class="pct">${pct}%</span></div>`;
     }).join("");
 
+    yrSummary = { year, km, gain, n: list.length, sec, vel, avgIdx, bestMonthLabel, bestMonthKm, streak,
+      longestKm: longest ? longest.km : null, hardestIdx: hardest ? difficultyIndex(hardest) : null,
+      types: [...byType.entries()].sort((a,b) => b[1]-a[1]).map(([ty,tkm]) => [ty, km ? Math.round(tkm/km*100) : 0, typeColors.get(ty) || "#ff8a69"]) };
     body.innerHTML = `
       <div class="yr-hero">
         <div><div class="yr-num">${Math.round(km).toLocaleString(LOC())}</div><div class="yr-label">${tr("yr_km_total")}</div></div>
@@ -2484,6 +2776,118 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   els("btnYearReview").addEventListener("click", openYearReview);
   els("yrClose").addEventListener("click", closeYearReview);
   els("yrYear").addEventListener("change", renderYearReview);
+
+  // ---------- compartir el resumen anual ----------
+  let yrSummary = null, shareBlob = null;
+  const appUrl = () => /^https?:/.test(location.protocol) ? location.origin + location.pathname : "";
+  function shareText(){
+    const d = yrSummary;
+    return tr("share_text", d.year, Math.round(d.km).toLocaleString(LOC()), Math.round(d.gain).toLocaleString(LOC()), d.n);
+  }
+
+  // Imagen cuadrada (1080x1080) con el resumen, dibujada en un canvas.
+  async function buildShareImage(){
+    const d = yrSummary, W = 1080, H = 1080;
+    try{ await document.fonts.ready; }catch(e){}
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const g = c.getContext("2d");
+    const bg = g.createLinearGradient(0, 0, W, H); bg.addColorStop(0, "#121a2e"); bg.addColorStop(1, "#1d2844");
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    const grad = g.createLinearGradient(80, 0, 900, 0); grad.addColorStop(0, "#ff9a6c"); grad.addColorStop(1, "#ff5f7e");
+    const serif = "'Fraunces', Georgia, serif", sans = "'Public Sans', 'Segoe UI', Arial, sans-serif";
+    // cabecera
+    g.fillStyle = "#8b95ab"; g.font = `600 34px ${sans}`; g.fillText("🏔️  HINTERWAY", 80, 120);
+    g.fillStyle = "#eef1f7"; g.font = `700 76px ${serif}`; g.fillText(tr("share_img_year", d.year), 80, 220);
+    // cifras grandes
+    const big = [[Math.round(d.km).toLocaleString(LOC()), tr("share_img_km")],
+                 [Math.round(d.gain).toLocaleString(LOC()), tr("share_img_gain")],
+                 [String(d.n), tr("share_img_routes")]];
+    big.forEach(([num, lab], i) => {
+      const y = 360 + i*150;
+      g.fillStyle = grad; g.font = `700 112px ${serif}`; g.fillText(num, 80, y);
+      const wNum = g.measureText(num).width;
+      g.fillStyle = "#8b95ab"; g.font = `500 38px ${sans}`; g.fillText(lab, 80 + wNum + 24, y);
+    });
+    // datos secundarios
+    const small = [
+      [tr("yr_moving_time"), d.sec ? formatDuration(d.sec) : "—"],
+      [tr("yr_avg_speed"), d.vel],
+      [tr("yr_busiest_month"), d.bestMonthLabel ? d.bestMonthLabel.charAt(0).toUpperCase() + d.bestMonthLabel.slice(1) : "—"],
+      [tr("yr_longest_route"), d.longestKm != null ? d.longestKm + " km" : "—"],
+    ];
+    small.forEach(([lab, val], i) => {
+      const x = 80 + (i%2)*460, y = 720 + Math.floor(i/2)*110;
+      g.fillStyle = "#8b95ab"; g.font = `600 26px ${sans}`; g.fillText(lab.toUpperCase(), x, y);
+      g.fillStyle = "#eef1f7"; g.font = `700 44px ${serif}`; g.fillText(val, x, y + 52);
+    });
+    // barra de reparto por tipo
+    let x = 80; const bw = W - 160;
+    d.types.forEach(([ty, pct, color]) => { const w = bw*pct/100; g.fillStyle = color; g.fillRect(x, 960, w, 18); x += w; });
+    g.fillStyle = "#8b95ab"; g.font = `500 24px ${sans}`;
+    g.fillText(d.types.slice(0,3).map(([ty,pct]) => `${ty} ${pct}%`).join("   ·   "), 80, 1020);
+    return await new Promise(res => c.toBlob(res, "image/png"));
+  }
+
+  function shareTargets(){
+    const text = shareText(), url = appUrl(), d = yrSummary;
+    const tu = url ? `${text} ${url}` : text;
+    const e = encodeURIComponent;
+    const t = [
+      { id:"whatsapp", label:"WhatsApp", color:"#25D366", ico:"W", href:`https://wa.me/?text=${e(tu)}` },
+      { id:"telegram", label:"Telegram", color:"#229ED9", ico:"T", href:`https://t.me/share/url?url=${e(url || " ")}&text=${e(text)}` },
+      { id:"x", label:"X", color:"#000000", ico:"X", href:`https://twitter.com/intent/tweet?text=${e(text)}${url ? `&url=${e(url)}` : ""}` },
+    ];
+    // Facebook y LinkedIn solo comparten enlaces: solo si la app está publicada en una web.
+    if(url){
+      t.push({ id:"facebook", label:"Facebook", color:"#1877F2", ico:"f", href:`https://www.facebook.com/sharer/sharer.php?u=${e(url)}` });
+      t.push({ id:"linkedin", label:"LinkedIn", color:"#0A66C2", ico:"in", href:`https://www.linkedin.com/sharing/share-offsite/?url=${e(url)}` });
+    }
+    t.push({ id:"email", label:tr("share_email"), color:"#8b95ab", ico:"@", href:`mailto:?subject=${e(tr("share_title", d.year))}&body=${e(tu)}` });
+    return t;
+  }
+
+  async function openSharePanel(){
+    if(!yrSummary) return;
+    const panel = els("sharePanel");
+    if(!panel.classList.contains("hidden")){ panel.classList.add("hidden"); return; }
+    shareBlob = await buildShareImage();
+    const img = els("shareImg");
+    if(img.src) URL.revokeObjectURL(img.src);
+    img.src = URL.createObjectURL(shareBlob);
+    const file = new File([shareBlob], `hinterway-${yrSummary.year}.png`, { type:"image/png" });
+    const canNative = !!(navigator.canShare && navigator.canShare({ files:[file] }));
+    const grid = els("shareGrid");
+    grid.innerHTML = (canNative ? `<button class="primary wide" data-share="native">${tr("share_native")}</button>` : "")
+      + shareTargets().map(t => `<button class="ghost" data-share="${t.id}" data-href="${t.href.replace(/"/g,"&quot;")}"><span class="ico" style="background:${t.color};">${t.ico}</span>${t.label}</button>`).join("")
+      + `<button class="ghost" data-share="copy">${tr("share_copy")}</button>`
+      + `<button class="ghost wide" data-share="download">⬇ ${tr("share_download")}</button>`;
+    els("shareNote").textContent = tr("share_note");
+    panel.classList.remove("hidden");
+  }
+
+  els("yrShareBtn").addEventListener("click", e => { e.stopPropagation(); openSharePanel(); });
+  els("shareGrid").addEventListener("click", async e => {
+    const btn = e.target.closest("button[data-share]");
+    if(!btn || !yrSummary) return;
+    const kind = btn.dataset.share;
+    if(kind === "native"){
+      const file = new File([shareBlob], `hinterway-${yrSummary.year}.png`, { type:"image/png" });
+      const url = appUrl();
+      try{ await navigator.share({ files:[file], title: tr("share_title", yrSummary.year), text: url ? `${shareText()} ${url}` : shareText() }); }
+      catch(err){ /* cancelado por el usuario */ }
+    } else if(kind === "copy"){
+      const url = appUrl();
+      try{ await navigator.clipboard.writeText(url ? `${shareText()} ${url}` : shareText()); btn.textContent = "✓ " + tr("share_copied"); }
+      catch(err){ prompt(tr("share_copy"), shareText()); }
+    } else if(kind === "download"){
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(shareBlob); a.download = `hinterway-${yrSummary.year}.png`; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    } else if(btn.dataset.href){
+      if(kind === "email") location.href = btn.dataset.href;
+      else window.open(btn.dataset.href, "_blank", "noopener,width=640,height=560");
+    }
+  });
   els("yearReviewModal").addEventListener("click", e => { if(e.target === els("yearReviewModal")) closeYearReview(); });
   document.addEventListener("keydown", e => { if(e.key === "Escape") closeYearReview(); });
 
@@ -3038,6 +3442,22 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   });
   els("dataTable").addEventListener("mouseleave", () => cellTip.classList.add("hidden"));
   els("dataTable").addEventListener("click", () => cellTip.classList.add("hidden"));
+
+  els("routeIntensity").value = routeIntensity;
+  els("routeIntensityVal").textContent = routeIntensity;
+  els("routeIntensity").addEventListener("input", e => {
+    routeIntensity = parseInt(e.target.value, 10);
+    els("routeIntensityVal").textContent = routeIntensity;
+    try{ localStorage.setItem("heatmap-route-intensity", String(routeIntensity)); }catch(err){}
+    applyRouteIntensity();
+  });
+
+  els("routeHead").addEventListener("keydown", e => {
+    if(e.key !== "Enter") return;
+    const id = e.target.dataset.id;
+    if(e.target.matches(".popup-type-new") && e.target.value.trim()) applyTypeChange(id, e.target.value.trim());
+    else if(e.target.matches(".popup-rename-input")) renameTrack(id, e.target.value);
+  });
 
   // ---------- arranque ----------
   (async function init(){
