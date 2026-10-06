@@ -246,6 +246,49 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
 .yr-type-row .bar{ flex:1; height:8px; border-radius:4px; background:var(--panel-2); overflow:hidden; }
 .yr-type-row .bar div{ height:100%; }
 .yr-type-row .pct{ width:42px; text-align:right; color:var(--text-dim); font-size:12px; }
+
+/* ================= Móvil (pantallas de hasta 700 px) ================= */
+.mobile-only{ display:none !important; }
+.sidebar-close{ display:none; }
+@media (max-width:700px){
+  .mobile-only{ display:block !important; }
+  .desktop-only{ display:none !important; }
+  header{ gap:6px; padding:8px 10px; }
+  header h1{ font-size:15px; white-space:nowrap; }
+  header .count{ display:none; }
+  .menubar{ gap:0; }
+  .menu-btn{ padding:6px 7px; font-size:13.5px; }
+  .lang-btn{ display:none !important; }
+  .menu{ position:static; }
+  .menu-dropdown{ position:fixed; left:8px; right:8px; top:52px; min-width:0; }
+  .menu-item{ padding:11px 12px; font-size:14px; }
+  /* Panel de filtros como cajón superpuesto al mapa */
+  aside#sidebar{ position:fixed; left:0; top:49px; bottom:0; width:min(320px, 86vw); z-index:1300; box-shadow:8px 0 30px rgba(0,0,0,.5); }
+  .sidebar-close{ display:block; position:sticky; top:0; margin:-6px -6px 6px auto; padding:4px 10px; font-size:13px; }
+  /* Ventana de la ruta compacta */
+  .elev-panel{ max-height:58vh; overflow-y:auto; padding:8px 10px 6px; }
+  .rp-head{ gap:8px; }
+  .rp-id{ order:1; flex:1 1 0; min-width:0; }
+  .rp-actions{ order:2; gap:4px; }
+  .rp-actions button{ padding:5px 7px; }
+  .rp-actions select{ max-width:92px; }
+  .rp-stats{ order:3; flex:1 1 100%; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .rp-stat{ min-width:52px; padding:3px 7px; }
+  .rp-terrain{ order:4; flex:1 1 100%; }
+  #elevSlope{ font-size:11.5px !important; }
+  #elevSvg{ touch-action:none; }
+  /* Ventanas emergentes y tablas */
+  .modal{ padding:12px; }
+  .data-table .c-type, .data-table .c-duration, .data-table .c-speed, .data-table .c-idx, .data-table .c-idr,
+  .data-table .c-s_asf, .data-table .c-s_pis, .data-table .c-s_sen{ display:none; }
+  .data-table th.c-name{ width:auto; }
+  .data-table th.c-date{ width:78px; }
+  .top10-table .num:nth-child(n+8){ display:none; }
+  .yr-hero{ gap:18px; }
+  .yr-hero .yr-num{ font-size:30px; }
+  .surf-status{ top:56px; font-size:12px; flex-wrap:wrap; justify-content:center; }
+  .leaflet-control-attribution{ font-size:9px; }
+}
 </style>
 </head>
 <body>
@@ -292,6 +335,9 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
         <div class="menu-dropdown">
           <button class="menu-item" id="btnHelp" data-i18n="help">Ayuda</button>
           <button class="menu-item" id="btnAbout" data-i18n="about">Quiénes somos</button>
+          <hr class="menu-sep mobile-only">
+          <button class="menu-item mobile-only" id="btnLangEsM">🇪🇸 Español</button>
+          <button class="menu-item mobile-only" id="btnLangEnM">🇬🇧 English</button>
         </div>
       </div>
       <button class="ghost lang-btn" id="btnLangEs" title="Español">
@@ -311,6 +357,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   </header>
   <div class="body">
     <aside id="sidebar">
+      <button class="ghost sidebar-close" id="sidebarClose">✕</button>
       <h2 data-i18n="filter_name">Nombre</h2>
       <input type="text" id="nameFilter" data-i18n-ph="filter_name_ph" placeholder="Buscar en el nombre…" style="width:100%; margin-bottom:4px;">
 
@@ -896,6 +943,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     LANG = lang;
     try{ localStorage.setItem("heatmap-lang", LANG); }catch(e){}
     applyI18n();
+    updateFiltersBtn();
     renderHelp();
     if(!els("aboutModal").classList.contains("hidden")) renderAbout();
     rebuildFilterLists();
@@ -914,6 +962,8 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   }
   els("btnLangEs").addEventListener("click", () => setLang("es"));
   els("btnLangEn").addEventListener("click", () => setLang("en"));
+  els("btnLangEsM").addEventListener("click", () => setLang("es"));
+  els("btnLangEnM").addEventListener("click", () => setLang("en"));
 
 
   // ---------- geo utils ----------
@@ -1822,6 +1872,35 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     return nearest;
   }
 
+  // Pantallas táctiles: el dedo hace lo mismo que el ratón. Arrastrar selecciona un tramo;
+  // tocar sin arrastrar muestra los datos de ese punto y lo marca en el mapa.
+  (function(){
+    const svg = els("elevSvg");
+    let last = null, moved = false;
+    const fire = (target, type, t) => target.dispatchEvent(new MouseEvent(type, { clientX:t.clientX, clientY:t.clientY, bubbles:true }));
+    svg.addEventListener("touchstart", e => {
+      if(e.touches.length !== 1) return;
+      last = e.touches[0]; moved = false;
+      fire(svg, "mousedown", last);
+      e.preventDefault();
+    }, { passive:false });
+    svg.addEventListener("touchmove", e => {
+      if(!last || e.touches.length !== 1) return;
+      const t = e.touches[0];
+      if(Math.abs(t.clientX - last.clientX) > 4) moved = true;
+      last = t;
+      fire(svg, "mousemove", t);
+      e.preventDefault();
+    }, { passive:false });
+    svg.addEventListener("touchend", e => {
+      if(!last) return;
+      const t = last; last = null;
+      fire(window, "mouseup", t);
+      if(!moved) fire(svg, "mousemove", t);   // un toque: muestra el punto
+      e.preventDefault();
+    }, { passive:false });
+  })();
+
   els("elevSvg").addEventListener("mousedown", e => {
     if(!activeProfile) return;
     elevDragStartKm = kmFromEvent(e);
@@ -2235,18 +2314,36 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   }
 
   // ---------- panel de filtros: mostrar / ocultar ----------
+  function updateFiltersBtn(){
+    const b = els("btnFilters");
+    b.textContent = tr(els("sidebar").classList.contains("hidden") ? "show_panel" : "hide_panel");
+    b.removeAttribute("data-i18n");   // el texto depende del estado, no es fijo
+  }
   function setSidebar(visible){
     els("sidebar").classList.toggle("hidden", !visible);
-    els("btnFilters").textContent = visible ? "Ocultar panel" : "Mostrar panel";
-    try{ localStorage.setItem("heatmap-panel-filtros", visible ? "1" : "0"); }catch(e){}
+    updateFiltersBtn();
+    if(!window.matchMedia("(max-width:700px)").matches){
+      try{ localStorage.setItem("heatmap-panel-filtros", visible ? "1" : "0"); }catch(e){}
+    }
     setTimeout(() => map.invalidateSize(), 50);
   }
   els("btnFilters").addEventListener("click", () => {
     setSidebar(els("sidebar").classList.contains("hidden"));
   });
-  try{
-    if(localStorage.getItem("heatmap-panel-filtros") === "0") setSidebar(false);
-  }catch(e){}
+  // En el móvil el panel de filtros es un cajón sobre el mapa: empieza cerrado y se abre desde Filtros.
+  const isMobile = () => window.matchMedia("(max-width:700px)").matches;
+  if(isMobile()){
+    els("sidebar").classList.add("hidden");
+    updateFiltersBtn();
+  } else {
+    try{
+      if(localStorage.getItem("heatmap-panel-filtros") === "0") setSidebar(false);
+    }catch(e){}
+  }
+  els("sidebarClose").addEventListener("click", () => {
+    els("sidebar").classList.add("hidden");
+    updateFiltersBtn();
+  });
 
   // ---------- menú superior ----------
   document.querySelectorAll(".menu-btn").forEach(btn => {
@@ -2279,6 +2376,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
         <li><strong>Una ruta en el mapa:</strong> al pincharla se resalta y se abre abajo su ventana: nombre, fecha y tipo; sus cifras (km, desnivel, tiempo, velocidad, índice e IDR); el terreno; los botones para cambiar el tipo (se guarda al elegirlo), renombrar (✎), analizar el terreno (↻), borrar (🗑) y cerrar (✕); y su perfil de elevación. Arrastra sobre el perfil para ampliar un tramo y ver su pendiente coloreada por sectores; pasa el ratón para ver km, altitud, pendiente y tipo de terreno de cada punto. Si la ruta tiene el terreno analizado, una franja de colores bajo el perfil marca los tramos de asfalto, pista y senda.</li>
         <li><strong>Mapa y capas:</strong> el icono de capas (arriba a la derecha) cambia el fondo del mapa y activa o desactiva las rutas y la capa de densidad (heatmap).</li>
         <li><strong>Paneles:</strong> Gráficos (evolución mensual o anual), Récords y Top 10, Calendario de actividad (un cuadradito por día), Tabla de rutas y Resumen anual. Todos usan las rutas que cumplen los filtros activos. En el Top 10 y en la Tabla se ordena pulsando el título de la columna (otra vez para invertir); en la Tabla, si un nombre no cabe, pasa el ratón para verlo entero.</li>
+        <li><strong>En el móvil:</strong> el panel de filtros se abre y se cierra desde Filtros (o con ✕) y queda por encima del mapa; el idioma se cambia desde Info. En el perfil, toca un punto para ver sus datos o arrastra el dedo para seleccionar un tramo. Algunas columnas de la Tabla se ocultan para que quepa.</li>
         <li><strong>Compartir el resumen anual:</strong> en Paneles → Resumen anual, "Compartir…" genera una imagen con las cifras del año (sin nombres de rutas) y ofrece WhatsApp, Telegram, X, email, copiar el texto o descargar la imagen; Facebook y LinkedIn solo aparecen si abres la app desde su dirección web. En el móvil, "Compartir (imagen + texto)" envía la imagen directamente a cualquier app; en los demás casos solo se envía el texto y la imagen hay que adjuntarla.</li>
         <li><strong>Datos:</strong> exporta a CSV, o haz una copia de seguridad completa (y restáurala) desde el menú Datos. La copia es un archivo JSON legible que incluye las rutas, sus análisis de terreno, los colores de cada tipo y la intensidad de las rutas. Si hay cambios sin copiar y la última copia tiene más de 7 días (o no hay ninguna), la app te lo recuerda al abrirla. "Vaciar todos los datos" borra todo lo guardado en este navegador.</li>
       </ul>
@@ -2294,6 +2392,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
         <li><strong>A route on the map:</strong> clicking it highlights it and opens its panel at the bottom: name, date and type; its figures (km, gain, time, speed, index and RDI); the terrain; buttons to change the type (saved when chosen), rename (✎), analyze terrain (↻), delete (🗑) and close (✕); and its elevation profile. Drag over the profile to zoom into a section and see its gradient colored by sector; hover to see the km, altitude, gradient and terrain type at any point. If the route's terrain has been analyzed, a colored strip under the profile marks the paved, track and trail sections.</li>
         <li><strong>Map and layers:</strong> the layers icon (top right) changes the map background and toggles the routes and density (heatmap) layers.</li>
         <li><strong>Panels:</strong> Charts (monthly or yearly trends), Records & Top 10, Activity calendar (one square per day), Route table and Year in review. All of them use the routes matching the active filters. In the Top 10 and the Table, click a column title to sort (again to reverse); in the Table, hover over a name that doesn't fit to see it in full.</li>
+        <li><strong>On mobile:</strong> the filters panel opens and closes from Filters (or with ✕) and sits on top of the map; the language is changed from Info. On the profile, tap a point to see its data or drag your finger to select a section. Some Table columns are hidden so it fits.</li>
         <li><strong>Sharing the year in review:</strong> in Panels → Year in review, "Share…" creates an image with the year's figures (no route names) and offers WhatsApp, Telegram, X, email, copy the text or download the image; Facebook and LinkedIn only appear when you open the app from its web address. On mobile, "Share (image + text)" sends the image straight to any app; otherwise only the text is sent and the image has to be attached.</li>
         <li><strong>Data:</strong> export to CSV, or make a full backup (and restore it) from the Data menu. The backup is a readable JSON file with the routes, their terrain analyses, each type's color and the route intensity. If there are unsaved changes and the last backup is more than 7 days old (or there is none), the app reminds you when you open it. "Clear all data" deletes everything saved in this browser.</li>
       </ul>
@@ -3508,7 +3607,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       const row = document.createElement("tr");
       row.innerHTML = `<td><input type="checkbox" class="cmp-check" data-id="${t.id}" ${compareSelection.has(t.id)?"checked":""}></td>` + tableCols.map(c => {
         const v = tableRowValue(t, c.key);
-        return `<td class="${c.num ? "num" : ""}">${tableFormat(v, c.key)}</td>`;
+        return `<td class="c-${c.key}${c.num ? " num" : ""}">${tableFormat(v, c.key)}</td>`;
       }).join("");
       row.querySelector(".cmp-check").addEventListener("click", e => { e.stopPropagation(); toggleCompare(t.id); });
       row.addEventListener("click", () => focusTrack(t.id));
