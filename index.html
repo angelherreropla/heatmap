@@ -356,6 +356,12 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       </div>
     </main>
   </div>
+  <div class="surf-status hidden" id="backupReminder" style="top:auto; bottom:22px;">
+    <span>💾</span>
+    <span id="backupReminderText"></span>
+    <button class="primary" id="backupRemNow" data-i18n="backup_rem_now">Descargar copia</button>
+    <button class="ghost" id="backupRemLater" data-i18n="backup_rem_later">Más tarde</button>
+  </div>
   <div class="surf-status hidden" id="surfStatus">
     <div class="spinner" id="surfSpinner"></div>
     <span id="surfStatusText"></span>
@@ -708,6 +714,9 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       alert_no_valid_routes: "No se ha podido leer ninguna ruta válida de esos archivos.",
       alert_bulk_type_app_only: "El tipo se ha guardado en la aplicación. Al asignarlo a varios archivos a la vez no se escribe en los GPX (Chrome pediría un permiso por archivo, uno a uno); si quieres que quede grabado en el archivo, cambia el tipo de esa ruta en concreto desde su popup en el mapa.",
       alert_no_routes_yet: "No hay rutas guardadas todavía.",
+      backup_rem_never: (n) => `Tienes ${n} ruta(s) y todavía no has hecho ninguna copia de seguridad.`,
+      backup_rem_old: (d, n) => `Tu última copia de seguridad es de hace ${d} día(s)${n ? ` y tienes ${n} ruta(s) nueva(s)` : " y hay cambios desde entonces"}.`,
+      backup_rem_now: "Descargar copia", backup_rem_later: "Más tarde",
       confirm_restore: (n) => `Se van a añadir o actualizar ${n} ruta(s) desde la copia de seguridad. Las que ya tengas con el mismo nombre de archivo se sobrescribirán; el resto de tus rutas actuales no se tocan. ¿Continuar?`,
       alert_backup_unreadable: "No se ha podido leer ese archivo como copia de seguridad.",
       alert_db_blocked: "Hay otra pestaña con una versión anterior de esta app abierta. Ciérrala para que esta pueda actualizar sus datos guardados.",
@@ -831,6 +840,9 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       alert_no_valid_routes: "Could not read any valid route from those files.",
       alert_bulk_type_app_only: "The type was saved in the app. Assigning it to several files at once doesn't write it to the GPX files (Chrome would ask for permission for each file, one by one); if you want it saved to the file, change that specific route's type from its popup on the map.",
       alert_no_routes_yet: "No routes saved yet.",
+      backup_rem_never: (n) => `You have ${n} route(s) and haven't made a backup yet.`,
+      backup_rem_old: (d, n) => `Your last backup is ${d} day(s) old${n ? ` and you have ${n} new route(s)` : " and there have been changes since"}.`,
+      backup_rem_now: "Download backup", backup_rem_later: "Later",
       confirm_restore: (n) => `${n} route(s) from the backup will be added or updated. Ones you already have with the same file name will be overwritten; the rest of your current routes are untouched. Continue?`,
       alert_backup_unreadable: "That file could not be read as a backup.",
       alert_db_blocked: "Another tab with an older version of this app is open. Close it so this one can update its saved data.",
@@ -1964,6 +1976,15 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   const palette = ["#ff5a1f","#00e5cc","#ffd400","#a259ff","#39ff6a","#ff2d78","#2f9bff","#f2f2f2"];
   let paletteIdx = 0;
   function nextColor(){ return palette[(paletteIdx++) % palette.length]; }
+  // Los colores de cada tipo se recuerdan en el navegador (y van en la copia de seguridad).
+  try{
+    const saved = JSON.parse(localStorage.getItem("heatmap-type-colors") || "{}");
+    Object.entries(saved).forEach(([k,v]) => typeColors.set(k, v));
+    paletteIdx = typeColors.size;
+  }catch(e){}
+  function saveTypeColors(){
+    try{ localStorage.setItem("heatmap-type-colors", JSON.stringify(Object.fromEntries(typeColors))); }catch(e){}
+  }
 
   // Máximos de los filtros de rango puestos automáticamente. Si el usuario no los ha tocado
   // (siguen valiendo lo que puso la app), se actualizan al añadir o borrar rutas; si los ha
@@ -1993,7 +2014,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     types.forEach(ty => {
       if(!seenTypes.has(ty)){
         seenTypes.add(ty); state.types.add(ty);
-        if(!typeColors.has(ty)) typeColors.set(ty, nextColor());
+        if(!typeColors.has(ty)){ typeColors.set(ty, nextColor()); saveTypeColors(); }
       }
       const lbl = document.createElement("label");
       lbl.innerHTML = `<input type="checkbox" data-type="${ty}" ${state.types.has(ty)?"checked":""}> `
@@ -2135,7 +2156,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     const t = tracks.find(tr => tr.id === id);
     if(!t || !newType) return;
     t.type = newType;
-    if(!typeColors.has(newType)) typeColors.set(newType, nextColor());
+    if(!typeColors.has(newType)){ typeColors.set(newType, nextColor()); saveTypeColors(); }
     await dbPutAll([t]);
     const handle = fileHandles.get(id);
     if(handle){
@@ -2212,6 +2233,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       rebuildFilterLists();
       applyFiltersAndRedraw();
     } finally { hideLoading(); }
+    checkBackupReminder();
   }
 
   // ---------- panel de filtros: mostrar / ocultar ----------
@@ -2260,7 +2282,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
         <li><strong>Mapa y capas:</strong> el icono de capas (arriba a la derecha) cambia el fondo del mapa y activa o desactiva las rutas y la capa de densidad (heatmap).</li>
         <li><strong>Paneles:</strong> Gráficos (evolución mensual o anual), Récords y Top 10, Calendario de actividad (un cuadradito por día), Tabla de rutas y Resumen anual. Todos usan las rutas que cumplen los filtros activos. En el Top 10 y en la Tabla se ordena pulsando el título de la columna (otra vez para invertir); en la Tabla, si un nombre no cabe, pasa el ratón para verlo entero.</li>
         <li><strong>Compartir el resumen anual:</strong> en Paneles → Resumen anual, "Compartir…" genera una imagen con las cifras del año (sin nombres de rutas) y ofrece WhatsApp, Telegram, X, email, copiar el texto o descargar la imagen; Facebook y LinkedIn solo aparecen si abres la app desde su dirección web. En el móvil, "Compartir (imagen + texto)" envía la imagen directamente a cualquier app; en los demás casos solo se envía el texto y la imagen hay que adjuntarla.</li>
-        <li><strong>Datos:</strong> exporta a CSV, o haz una copia de seguridad completa (y restáurala) desde el menú Datos. "Vaciar todos los datos" borra todo lo guardado en este navegador.</li>
+        <li><strong>Datos:</strong> exporta a CSV, o haz una copia de seguridad completa (y restáurala) desde el menú Datos. La copia es un archivo JSON legible que incluye las rutas, sus análisis de terreno, los colores de cada tipo y la intensidad de las rutas. Si hay cambios sin copiar y la última copia tiene más de 7 días (o no hay ninguna), la app te lo recuerda al abrirla. "Vaciar todos los datos" borra todo lo guardado en este navegador.</li>
       </ul>
       <p><strong>Cómo se calcula:</strong> el desnivel suma subidas de más de 2 m tras limpiar la altitud de aberraciones; el tiempo en movimiento descuenta los tramos a menos de 0,3 m/s; el índice de dificultad es desnivel/10 + km + horas en movimiento × 25 (si no hay tiempo calculable, sale "Sin índice"). El IDR (índice de dificultad relativo) es el percentil de ese índice dentro de las rutas que cumplen los filtros activos: un IDR de 70 significa que la ruta es igual o más difícil que el 70 % de la selección, y la más difícil tiene 100. Por eso cambia al cambiar los filtros.</p>
       <p><strong>Terreno:</strong> el botón "Analizar terreno" del popup (o Datos → Analizar terreno) descarga de OpenStreetMap los caminos de la zona, ajusta la traza a ellos y calcula qué parte va por asfalto, pista, senda o sin datos (a más de 25 m de cualquier camino). Para ello se envía a OpenStreetMap la zona de la ruta (no la traza). Refleja los caminos tal como están hoy en OpenStreetMap, no cuando hiciste la ruta. El resultado se guarda con la ruta y entra en la copia de seguridad. Además se guarda una copia aparte, que se conserva al vaciar los datos (salvo que elijas borrarla) y se recupera sola al volver a cargar el mismo GPX. Los caminos descargados de cada zona también se guardan en el navegador durante 180 días, así que analizar otras rutas por zonas ya consultadas es casi instantáneo; la primera ruta de cada zona nueva es la que más tarda, y depende de lo cargado que esté el servidor público de OpenStreetMap.</p>
@@ -2275,7 +2297,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
         <li><strong>Map and layers:</strong> the layers icon (top right) changes the map background and toggles the routes and density (heatmap) layers.</li>
         <li><strong>Panels:</strong> Charts (monthly or yearly trends), Records & Top 10, Activity calendar (one square per day), Route table and Year in review. All of them use the routes matching the active filters. In the Top 10 and the Table, click a column title to sort (again to reverse); in the Table, hover over a name that doesn't fit to see it in full.</li>
         <li><strong>Sharing the year in review:</strong> in Panels → Year in review, "Share…" creates an image with the year's figures (no route names) and offers WhatsApp, Telegram, X, email, copy the text or download the image; Facebook and LinkedIn only appear when you open the app from its web address. On mobile, "Share (image + text)" sends the image straight to any app; otherwise only the text is sent and the image has to be attached.</li>
-        <li><strong>Data:</strong> export to CSV, or make a full backup (and restore it) from the Data menu. "Clear all data" deletes everything saved in this browser.</li>
+        <li><strong>Data:</strong> export to CSV, or make a full backup (and restore it) from the Data menu. The backup is a readable JSON file with the routes, their terrain analyses, each type's color and the route intensity. If there are unsaved changes and the last backup is more than 7 days old (or there is none), the app reminds you when you open it. "Clear all data" deletes everything saved in this browser.</li>
       </ul>
       <p><strong>How it's calculated:</strong> elevation gain adds climbs of more than 2 m after cleaning up altitude glitches; moving time excludes sections under 0.3 m/s; the difficulty index is gain/10 + km + moving hours × 25 (shown as "No index" when no time can be calculated). The RDI (relative difficulty index) is that index's percentile within the routes matching the active filters: an RDI of 70 means the route is as hard as or harder than 70% of the selection, and the hardest one gets 100. That's why it changes when you change the filters.</p>
       <p><strong>Terrain:</strong> the "Analyze terrain" button in the popup (or Data → Analyze terrain) downloads the ways in the area from OpenStreetMap, matches the track to them and works out how much is paved, track, trail or no data (more than 25 m from any way). Only the route's area (not the track) is sent to OpenStreetMap. It reflects the ways as they are in OpenStreetMap today, not when you rode. The result is saved with the route and included in the backup. A separate copy is also kept, which survives clearing the data (unless you choose to delete it) and comes back automatically when you load the same GPX again. The ways downloaded for each area are also kept in the browser for 180 days, so analyzing other routes in areas already queried is almost instant; the first route in each new area is the slowest, and it depends on how busy the public OpenStreetMap server is.</p>
@@ -2348,16 +2370,91 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   });
 
   // ---------- copia de seguridad ----------
-  els("btnBackup").addEventListener("click", () => {
+  // JSON "bonito": objetos y listas indentados, pero cada punto (o lista corta de números) en una
+  // sola línea, para que sea legible sin multiplicar el número de líneas.
+  function prettyJson(v, ind = ""){
+    const isPrim = x => x === null || typeof x !== "object";
+    const inner = ind + "  ";
+    if(typeof v === "number" && !Number.isInteger(v) && isFinite(v)) v = Number(v.toFixed(6));   // máx. 6 decimales
+    if(isPrim(v)) return JSON.stringify(v === undefined ? null : v);
+    if(Array.isArray(v)){
+      if(!v.length) return "[]";
+      if(v.every(isPrim)) return "[" + v.map(x => prettyJson(x)).join(",") + "]";
+      return "[\n" + v.map(x => inner + prettyJson(x, inner)).join(",\n") + "\n" + ind + "]";
+    }
+    const keys = Object.keys(v).filter(k => v[k] !== undefined);
+    if(!keys.length) return "{}";
+    if(keys.every(k => isPrim(v[k]))) return "{ " + keys.map(k => JSON.stringify(k) + ": " + prettyJson(v[k])).join(", ") + " }";
+    return "{\n" + keys.map(k => inner + JSON.stringify(k) + ": " + prettyJson(v[k], inner)).join(",\n") + "\n" + ind + "}";
+  }
+
+  // Firma sencilla del contenido, para saber si hay cambios desde la última copia.
+  function dataSignature(){
+    let h = 0;
+    const str = tracks.map(t => `${t.id}|${t.name}|${t.type}|${t.surface ? 1 : 0}`).sort().join("\n");
+    for(let i=0;i<str.length;i++){ h = ((h << 5) - h + str.charCodeAt(i)) | 0; }
+    return tracks.length + ":" + h;
+  }
+
+  async function downloadBackup(){
     if(!tracks.length){ alert(tr("alert_no_routes_yet")); return; }
-    const payload = { app: "heatmap-rutas-osm", version: 1, exportedAt: new Date().toISOString(), tracks };
-    const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `backup_rutas_${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    showLoading(tr("loading_wait"));
+    try{
+      let surfaceCache = [];
+      try{ surfaceCache = [...(await surfCacheGetAll()).entries()].map(([key, surface]) => ({ key, surface })); }catch(e){}
+      let baseLayer = null;
+      try{ baseLayer = localStorage.getItem("heatmap-capa-base"); }catch(e){}
+      const payload = {
+        app: "hinterway", version: 2, appVersion: APP_VERSION, exportedAt: new Date().toISOString(),
+        settings: { lang: LANG, routeIntensity, typeColors: Object.fromEntries(typeColors), baseLayer },
+        counts: { tracks: tracks.length, surfaceCache: surfaceCache.length },
+        tracks,
+        surfaceCache,
+      };
+      const blob = new Blob([prettyJson(payload) + "\n"], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `backup_rutas_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      try{
+        localStorage.setItem("heatmap-backup-at", String(Date.now()));
+        localStorage.setItem("heatmap-backup-sig", dataSignature());
+        localStorage.setItem("heatmap-backup-count", String(tracks.length));
+      }catch(e){}
+      hideBackupReminder();
+    } finally { hideLoading(); }
+  }
+  els("btnBackup").addEventListener("click", downloadBackup);
+
+  // ---------- recordatorio de copia de seguridad ----------
+  // Aparece al abrir la app (y tras añadir rutas) si hay cambios sin copiar y la última copia
+  // tiene más de 7 días o no se ha hecho nunca. "Más tarde" lo pospone 3 días.
+  function hideBackupReminder(){ els("backupReminder").classList.add("hidden"); }
+  function checkBackupReminder(){
+    if(!tracks.length) return;
+    let at = null, sig = null, cnt = 0, snooze = 0;
+    try{
+      at = parseInt(localStorage.getItem("heatmap-backup-at"), 10) || null;
+      sig = localStorage.getItem("heatmap-backup-sig");
+      cnt = parseInt(localStorage.getItem("heatmap-backup-count"), 10) || 0;
+      snooze = parseInt(localStorage.getItem("heatmap-backup-snooze"), 10) || 0;
+    }catch(e){ return; }
+    if(Date.now() < snooze) return;
+    if(sig === dataSignature()) return;
+    const days = at ? Math.floor((Date.now() - at) / 86400000) : null;
+    if(days != null && days < 7) return;
+    const nuevas = Math.max(0, tracks.length - cnt);
+    els("backupReminderText").textContent = days == null
+      ? tr("backup_rem_never", tracks.length)
+      : tr("backup_rem_old", days, nuevas);
+    els("backupReminder").classList.remove("hidden");
+  }
+  els("backupRemNow").addEventListener("click", downloadBackup);
+  els("backupRemLater").addEventListener("click", () => {
+    try{ localStorage.setItem("heatmap-backup-snooze", String(Date.now() + 3*86400000)); }catch(e){}
+    hideBackupReminder();
   });
 
   els("btnRestore").addEventListener("click", () => els("restoreInput").click());
@@ -2375,6 +2472,27 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       if(!confirm(tr("confirm_restore", validas.length))){
         hideLoading();
         return;
+      }
+      // Copia v2: análisis de terreno guardados aparte y ajustes.
+      if(Array.isArray(data.surfaceCache) && data.surfaceCache.length){
+        try{
+          const db = await openDB();
+          await new Promise((res, rej) => {
+            const tx = db.transaction(SURF_STORE, "readwrite");
+            data.surfaceCache.forEach(it => { if(it && it.key && it.surface) tx.objectStore(SURF_STORE).put(it); });
+            tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+          });
+        }catch(e){}
+      }
+      const st = data.settings || {};
+      if(st.typeColors && typeof st.typeColors === "object"){
+        Object.entries(st.typeColors).forEach(([k,v]) => { if(/^#[0-9a-f]{6}$/i.test(v)) typeColors.set(k, v); });
+        saveTypeColors();
+      }
+      if(st.routeIntensity >= 1 && st.routeIntensity <= 10){
+        routeIntensity = st.routeIntensity;
+        els("routeIntensity").value = routeIntensity; els("routeIntensityVal").textContent = routeIntensity;
+        try{ localStorage.setItem("heatmap-route-intensity", String(routeIntensity)); }catch(e){}
       }
       await fillSurfacesFromCache(validas);
       await dbPutAll(validas);
@@ -2483,6 +2601,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       applyFiltersAndRedraw();
     } else if(e.target.matches("[data-color]")){
       typeColors.set(e.target.dataset.color, e.target.value);
+      saveTypeColors();
       applyFiltersAndRedraw();
     } else if(e.target.matches(".popup-type-select")){
       const id = e.target.dataset.id;
@@ -3472,6 +3591,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     rebuildFilterLists();
     applyFiltersAndRedraw();
     hideLoading();
+    checkBackupReminder();
   })();
 })();
 </script>
