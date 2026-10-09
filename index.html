@@ -387,7 +387,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
         </svg>
       </button>
     </nav>
-    <input type="file" id="gpxInput" accept=".gpx" multiple class="hidden">
+    <input type="file" id="gpxInput" accept=".gpx,.tcx,.gz" multiple class="hidden">
   </header>
   <div class="body">
     <aside id="sidebar">
@@ -786,7 +786,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       set_fit: "Centrar el mapa al pinchar una ruta", set_fit_sub: "Si está desactivado, el mapa no se mueve al pinchar una ruta en él. Desde la tabla, los récords o el Top 10 siempre se centra.",
       set_type_count: (n, km) => `${n} ${n === 1 ? "ruta" : "rutas"} · ${km} km`,
       confirm_merge_types: (a, b) => `Ya existe el tipo "${b}". ¿Fusionar las rutas de "${a}" en "${b}"? Se quedará el color de "${b}".`,
-      add_gpx: "Añadir GPX", export_csv: "Exportar a CSV",
+      add_gpx: "Añadir rutas (GPX, TCX)", export_csv: "Exportar a CSV",
       backup_download: "Descargar copia de seguridad", backup_restore: "Restaurar copia de seguridad",
       clear_all: "Vaciar todos los datos",
       show_panel: "Mostrar panel", hide_panel: "Ocultar panel", reset_filters: "Restablecer filtros",
@@ -798,10 +798,10 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       filter_km: "Distancia (km)", filter_gain: "Desnivel positivo (m)", filter_idx: "Índice de dificultad", route_intensity: "Intensidad de las rutas",
       range_to: "a",
       empty_title: "Aún no hay rutas cargadas",
-      empty_text: "Selecciona los archivos GPX de tu carpeta (puedes elegirlos todos a la vez) y luego indica de qué tipo son.",
-      empty_btn: "Seleccionar archivos GPX",
+      empty_text: "Selecciona tus archivos GPX o TCX, también comprimidos en .gz (puedes elegirlos todos a la vez). Si no traen el tipo de actividad, te lo preguntará.",
+      empty_btn: "Seleccionar archivos",
       loading_wait: "Cargando, espere por favor…",
-      elev_no_data: "Este GPX no trae datos de elevación.",
+      elev_no_data: "Esta ruta no trae datos de elevación.",
       elev_hint: "arrastra sobre el gráfico para ampliar un tramo",
       elev_slope_full: (avgUp,maxUp,maxDown) => `Pendiente media (subidas): ${avgUp} · Pendiente máx.: ${maxUp} % · Bajada máx.: ${maxDown} % (tramos de 200 m)`,
       elev_segment: (dist,gain,loss,avg) => `Tramo seleccionado: ${dist} km · subida +${gain} m · bajada −${loss} m · ${avg}% de media &nbsp;·&nbsp; <a href="#" class="elev-reset-zoom" style="color:var(--accent-2);">Ver ruta completa</a>`,
@@ -813,7 +813,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       new_type: "+ Nuevo tipo…", new_type_ph: "Nombre del nuevo tipo",
       rename: "Renombrar", delete_route: "Borrar ruta",
       type_modal_title: "Tipo de ruta",
-      type_modal_count: (n) => `${n} archivo(s) sin tipo detectado en el GPX`,
+      type_modal_count: (n) => `${n} archivo(s) sin tipo de actividad`,
       moving_suffix: "en mov.", no_data: "sin datos",
       no_lib_charts: "No se ha podido cargar la librería de gráficos (¿sin conexión a internet?).",
       no_dated_routes: "No hay rutas con fecha para mostrar con los filtros actuales.",
@@ -865,10 +865,12 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       capa_osm: "OpenStreetMap", capa_topo: "Topográfico (OpenTopoMap)",
       capa_ciclista: "Ciclista (CyclOSM)", capa_satelite: "Satélite (Esri)",
       alert_name_saved_not_file: "El nombre se ha actualizado en la aplicación, pero no se ha podido escribir en el archivo GPX (¿permiso denegado?).",
-      alert_name_saved_app_only: 'El nombre se ha actualizado en la aplicación. Para que también quede grabado en el archivo GPX, vuelve a añadirlo con "Añadir GPX".',
+      alert_name_saved_app_only: 'El nombre se ha actualizado en la aplicación. Para que también quede grabado en el archivo GPX, vuelve a añadirlo con "Añadir rutas".',
       confirm_delete: (name) => `Esto borra "${name}" de la aplicación (no borra el archivo GPX de tu disco). ¿Continuar?`,
       alert_type_saved_not_file: "El tipo se ha actualizado en la aplicación, pero no se ha podido escribir en el archivo GPX (¿permiso denegado?).",
-      alert_type_saved_app_only: 'El tipo se ha actualizado en la aplicación. Para que también quede grabado en el archivo GPX, vuelve a añadirlo con "Añadir GPX".',
+      alert_type_saved_app_only: 'El tipo se ha actualizado en la aplicación. Para que también quede grabado en el archivo GPX, vuelve a añadirlo con "Añadir rutas".',
+      alert_saved_app_only_other: "Cambio guardado en la aplicación. En los archivos TCX y en los comprimidos (.gz) no se escribe nada en el archivo.",
+      alert_some_unread: (n, list) => `${n} archivo(s) no se han podido leer (formato no admitido o sin puntos GPS): ${list}`,
       alert_no_valid_routes: "No se ha podido leer ninguna ruta válida de esos archivos.",
       alert_bulk_type_app_only: "El tipo se ha guardado en la aplicación. Al asignarlo a varios archivos a la vez no se escribe en los GPX (Chrome pediría un permiso por archivo, uno a uno); si quieres que quede grabado en el archivo, cambia el tipo de esa ruta en concreto desde su popup en el mapa.",
       alert_no_routes_yet: "No hay rutas guardadas todavía.",
@@ -881,7 +883,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       confirm_clear_all: "Esto borra todas las rutas cargadas en este navegador. ¿Continuar?",
       confirm_clear_surf_note: n => `${n} ruta(s) tienen el terreno analizado. A continuación podrás elegir si conservas esos análisis para recuperarlos al volver a cargar los mismos GPX.`,
       confirm_clear_surf_cache: n => `¿Borrar también los ${n} análisis de terreno guardados?\n\n· Cancelar (recomendado): se conservan y se recuperarán solos al volver a cargar los mismos GPX.\n· Aceptar: se borran (junto con los caminos de OpenStreetMap ya descargados) y habría que volver a consultarlos.`,
-      loading_reading_gpx: (n) => `Leyendo ${n} archivo(s) GPX…`,
+      loading_reading_gpx: (n) => `Leyendo ${n} archivo(s)…`,
       loading_saving_routes: "Guardando rutas…",
       loading_reading_backup: "Leyendo copia de seguridad…",
       loading_saved_routes: "Cargando rutas guardadas…",
@@ -928,7 +930,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       set_fit: "Center the map when clicking a route", set_fit_sub: "When off, the map doesn't move when you click a route on it. From the table, records or Top 10 it always centers.",
       set_type_count: (n, km) => `${n} ${n === 1 ? "route" : "routes"} · ${km} km`,
       confirm_merge_types: (a, b) => `Type "${b}" already exists. Merge the routes of "${a}" into "${b}"? "${b}"'s color will be kept.`,
-      add_gpx: "Add GPX", export_csv: "Export to CSV",
+      add_gpx: "Add routes (GPX, TCX)", export_csv: "Export to CSV",
       backup_download: "Download backup", backup_restore: "Restore backup",
       clear_all: "Clear all data",
       show_panel: "Show panel", hide_panel: "Hide panel", reset_filters: "Reset filters",
@@ -940,10 +942,10 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       filter_km: "Distance (km)", filter_gain: "Elevation gain (m)", filter_idx: "Difficulty index", route_intensity: "Route intensity",
       range_to: "to",
       empty_title: "No routes loaded yet",
-      empty_text: "Select the GPX files from your folder (you can pick them all at once) and then say what type they are.",
-      empty_btn: "Select GPX files",
+      empty_text: "Select your GPX or TCX files, also gzipped as .gz (you can pick them all at once). If they don't include the activity type, you'll be asked.",
+      empty_btn: "Select files",
       loading_wait: "Loading, please wait…",
-      elev_no_data: "This GPX has no elevation data.",
+      elev_no_data: "This route has no elevation data.",
       elev_hint: "drag over the chart to zoom into a section",
       elev_slope_full: (avgUp,maxUp,maxDown) => `Average gradient (climbs): ${avgUp} · Max gradient: ${maxUp} % · Max descent: ${maxDown} % (200 m segments)`,
       elev_segment: (dist,gain,loss,avg) => `Selected section: ${dist} km · climb +${gain} m · descent −${loss} m · ${avg}% average &nbsp;·&nbsp; <a href="#" class="elev-reset-zoom" style="color:var(--accent-2);">View full route</a>`,
@@ -955,7 +957,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       new_type: "+ New type…", new_type_ph: "New type name",
       rename: "Rename", delete_route: "Delete route",
       type_modal_title: "Route type",
-      type_modal_count: (n) => `${n} file(s) with no type detected in the GPX`,
+      type_modal_count: (n) => `${n} file(s) with no activity type`,
       moving_suffix: "moving", no_data: "no data",
       no_lib_charts: "Could not load the charting library (no internet connection?).",
       no_dated_routes: "No routes with a date to show with the current filters.",
@@ -1007,10 +1009,12 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       capa_osm: "OpenStreetMap", capa_topo: "Topographic (OpenTopoMap)",
       capa_ciclista: "Cycling (CyclOSM)", capa_satelite: "Satellite (Esri)",
       alert_name_saved_not_file: "The name was updated in the app, but could not be written to the GPX file (permission denied?).",
-      alert_name_saved_app_only: 'The name was updated in the app. For it to also be saved in the GPX file, add it again with "Add GPX".',
+      alert_name_saved_app_only: 'The name was updated in the app. For it to also be saved in the GPX file, add it again with "Add routes".',
       confirm_delete: (name) => `This removes "${name}" from the app (it does not delete the GPX file from your disk). Continue?`,
       alert_type_saved_not_file: "The type was updated in the app, but could not be written to the GPX file (permission denied?).",
-      alert_type_saved_app_only: 'The type was updated in the app. For it to also be saved in the GPX file, add it again with "Add GPX".',
+      alert_type_saved_app_only: 'The type was updated in the app. For it to also be saved in the GPX file, add it again with "Add routes".',
+      alert_saved_app_only_other: "Change saved in the app. Nothing is written to TCX or compressed (.gz) files.",
+      alert_some_unread: (n, list) => `${n} file(s) could not be read (unsupported format or no GPS points): ${list}`,
       alert_no_valid_routes: "Could not read any valid route from those files.",
       alert_bulk_type_app_only: "The type was saved in the app. Assigning it to several files at once doesn't write it to the GPX files (Chrome would ask for permission for each file, one by one); if you want it saved to the file, change that specific route's type from its popup on the map.",
       alert_no_routes_yet: "No routes saved yet.",
@@ -1023,7 +1027,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       confirm_clear_all: "This deletes all routes loaded in this browser. Continue?",
       confirm_clear_surf_note: n => `${n} route(s) have their terrain analyzed. Next you can choose to keep those analyses so they come back when you load the same GPX files again.`,
       confirm_clear_surf_cache: n => `Also delete the ${n} saved terrain analyses?\n\n· Cancel (recommended): they are kept and come back automatically when you load the same GPX files again.\n· OK: they are deleted (along with the OpenStreetMap ways already downloaded) and would have to be queried again.`,
-      loading_reading_gpx: (n) => `Reading ${n} GPX file(s)…`,
+      loading_reading_gpx: (n) => `Reading ${n} file(s)…`,
       loading_saving_routes: "Saving routes…",
       loading_reading_backup: "Reading backup…",
       loading_saved_routes: "Loading saved routes…",
@@ -1177,16 +1181,64 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     return Math.round(gain);
   }
 
-  // ---------- parseo GPX ----------
+  // ---------- lectura de archivos: GPX y TCX, también comprimidos en .gz ----------
+  const ROUTE_FILE_RE = /\.(gpx|tcx)(\.gz)?$|\.gz$/i;
+  const isPlainGpx = name => /\.gpx$/i.test(name || "");     // solo en estos se puede escribir nombre/tipo
+  async function readRouteText(file){
+    const buf = new Uint8Array(await file.arrayBuffer());
+    if(buf[0] === 0x1f && buf[1] === 0x8b){                  // gzip
+      const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"));
+      return await new Response(stream).text();
+    }
+    return new TextDecoder("utf-8").decode(buf);
+  }
+  const childText = (el, name) => {
+    if(!el) return "";
+    const c = [...el.children].find(x => x.localName === name);
+    return c ? c.textContent.trim() : "";
+  };
+  // GPX: puntos <trkpt>, nombre <trk><name> o <metadata><name>, tipo <trk><type>.
+  function extractGpx(doc){
+    const pts = [...doc.getElementsByTagName("trkpt")].map(p => ({
+      lat: parseFloat(p.getAttribute("lat")),
+      lon: parseFloat(p.getAttribute("lon")),
+      ele: p.getElementsByTagName("ele")[0] ? parseFloat(p.getElementsByTagName("ele")[0].textContent) : null,
+      time: p.getElementsByTagName("time")[0] ? p.getElementsByTagName("time")[0].textContent : null,
+    }));
+    const trk = doc.getElementsByTagName("trk")[0];
+    const name = childText(trk, "name") || childText(doc.getElementsByTagName("metadata")[0], "name");
+    const type = childText(trk, "type") || null;
+    return { pts, name, type };
+  }
+  // TCX (Garmin Training Center): <Trackpoint> con <Position>, <AltitudeMeters> y <Time>.
+  // El deporte (<Activity Sport="Biking|Running|Other">) se traduce a los tipos de Strava; "Other" se deja sin tipo.
+  const TCX_SPORT = { biking:"Ride", running:"Run" };
+  function extractTcx(doc){
+    const pts = [...doc.getElementsByTagName("Trackpoint")].map(tp => {
+      const pos = [...tp.children].find(c => c.localName === "Position");
+      return {
+        lat: parseFloat(childText(pos, "LatitudeDegrees")),
+        lon: parseFloat(childText(pos, "LongitudeDegrees")),
+        ele: childText(tp, "AltitudeMeters") ? parseFloat(childText(tp, "AltitudeMeters")) : null,
+        time: childText(tp, "Time") || null,
+      };
+    });
+    const act = doc.getElementsByTagName("Activity")[0];
+    const course = doc.getElementsByTagName("Course")[0];
+    const sport = act ? (act.getAttribute("Sport") || "").toLowerCase() : "";
+    const name = childText(course, "Name") || "";
+    return { pts, name, type: TCX_SPORT[sport] || null };
+  }
+
   function parseGpxFile(file){
-    return file.text().then(text => {
+    return readRouteText(file).then(text => {
       const doc = new DOMParser().parseFromString(text, "application/xml");
-      const pts = [...doc.getElementsByTagName("trkpt")].map(p => ({
-        lat: parseFloat(p.getAttribute("lat")),
-        lon: parseFloat(p.getAttribute("lon")),
-        ele: p.getElementsByTagName("ele")[0] ? parseFloat(p.getElementsByTagName("ele")[0].textContent) : null,
-        time: p.getElementsByTagName("time")[0] ? p.getElementsByTagName("time")[0].textContent : null,
-      })).filter(p => isFinite(p.lat) && isFinite(p.lon));
+      const root = doc.documentElement ? doc.documentElement.localName : "";
+      let src;
+      if(root === "gpx") src = extractGpx(doc);
+      else if(root === "TrainingCenterDatabase") src = extractTcx(doc);
+      else return null;
+      const pts = src.pts.filter(p => isFinite(p.lat) && isFinite(p.lon));
       if(pts.length < 2) return null;
 
       let km = 0;
@@ -1212,18 +1264,10 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       }
       if(movSec > 0) duration = movSec;
 
-      const stem = file.name.replace(/\.gpx$/i, "");
+      const stem = file.name.replace(/\.gz$/i, "").replace(/\.(gpx|tcx)$/i, "");
       const m = stem.match(/^(\d{4})_(\d{2})_(\d{2})_(.+)$/);
-      // Nombre de la ruta: etiqueta <name> del track (o de <metadata>); si no hay, el nombre del archivo.
-      const trkEl = doc.getElementsByTagName("trk")[0];
-      const metaEl = doc.getElementsByTagName("metadata")[0];
-      const nameFrom = el => {
-        if(!el) return "";
-        const n = [...el.children].find(c => c.localName === "name");
-        return n ? n.textContent.trim() : "";
-      };
-      const gpxName = nameFrom(trkEl) || nameFrom(metaEl);
-      const name = gpxName || (m ? m[4] : stem);
+      // Nombre de la ruta: el que trae el archivo; si no hay, el nombre del archivo.
+      const name = src.name || (m ? m[4] : stem);
 
       let year = null, date = null;
       const tRef = pts.find(p => p.time);
@@ -1239,9 +1283,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
         year = parseInt(m[1],10);
       }
 
-      const trk = doc.getElementsByTagName("trk")[0];
-      const typeEl = trk ? trk.getElementsByTagName("type")[0] : null;
-      const tipoGpx = typeEl && typeEl.textContent.trim() ? typeEl.textContent.trim() : null;
+      const tipoGpx = src.type;
 
       return {
         id: file.name,
@@ -2372,7 +2414,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       try{ await writeNameToGpx(handle, nombre); }
       catch(e){ alert(tr("alert_name_saved_not_file")); }
     } else {
-      alert(tr("alert_name_saved_app_only"));
+      alert(tr(isPlainGpx(t.fileName) ? "alert_name_saved_app_only" : "alert_saved_app_only_other"));
     }
     rebuildFilterLists();
     applyFiltersAndRedraw();
@@ -2403,7 +2445,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       try{ await writeTypeToGpx(handle, newType); }
       catch(e){ alert(tr("alert_type_saved_not_file")); }
     } else {
-      alert(tr("alert_type_saved_app_only"));
+      alert(tr(isPlainGpx(t.fileName) ? "alert_type_saved_app_only" : "alert_saved_app_only_other"));
     }
     map.closePopup();
     rebuildFilterLists();
@@ -2417,7 +2459,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       try{
         const handles = await window.showOpenFilePicker({
           multiple: true,
-          types: [{ description: "Archivos GPX", accept: { "application/gpx+xml": [".gpx"] } }],
+          types: [{ description: "GPX, TCX, GZ", accept: { "application/gpx+xml": [".gpx"], "application/vnd.garmin.tcx+xml": [".tcx"], "application/gzip": [".gz"] } }],
         });
         const files = await Promise.all(handles.map(h => h.getFile()));
         handleGpxFiles(files, handles);
@@ -2430,7 +2472,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   async function handleGpxFiles(fileList, handles){
     const items = [...fileList]
       .map((f,i) => ({ file:f, handle: handles ? handles[i] : null }))
-      .filter(x => /\.gpx$/i.test(x.file.name));
+      .filter(x => ROUTE_FILE_RE.test(x.file.name));
     if(!items.length) return;
     showLoading(tr("loading_reading_gpx", items.length));
     let results;
@@ -2442,6 +2484,8 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     } finally { hideLoading(); }
     const valid = results.filter(Boolean);
     if(!valid.length){ alert(tr("alert_no_valid_routes")); return; }
+    const unread = items.filter((x, i) => !results[i]).map(x => x.file.name);
+    if(unread.length) alert(tr("alert_some_unread", unread.length, unread.slice(0, 8).join(", ") + (unread.length > 8 ? "…" : "")));
 
     const sinTipo = valid.filter(x => !x.t.type);
     if(sinTipo.length && DEFAULT_TYPE){
@@ -2457,7 +2501,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
       if(sinTipo.length > 1) alert(tr("alert_bulk_type_app_only"));
     }
 
-    valid.forEach(x => { if(x.handle) fileHandles.set(x.t.id, x.handle); });
+    valid.forEach(x => { if(x.handle && isPlainGpx(x.file ? x.file.name : x.t.fileName)) fileHandles.set(x.t.id, x.handle); });
     const parsed = valid.map(x => x.t);
 
     // Si se vuelve a cargar un GPX ya importado y la traza no ha cambiado, se conserva el análisis de terreno.
@@ -2536,8 +2580,8 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   const HELP_HTML = {
     es: `
       <ul style="margin:0 0 10px; padding-left:18px;">
-        <li><strong>Menú superior:</strong> <em>Datos</em> (añadir GPX, exportar CSV, copia de seguridad, analizar terreno, vaciar todo), <em>Filtros</em> (mostrar/ocultar panel, restablecer), <em>Paneles</em> (gráficos, récords, calendario, tabla, resumen anual) e <em>Info</em> (esta ayuda y Quiénes somos). El botón ⚙ abre la <em>Configuración</em>: pestaña <em>Apariencia</em> (idioma, tema claro u oscuro, formato de fecha, e intensidad y grosor de las rutas), pestaña <em>Tipos de actividad</em> (color de cada tipo, renombrar o fusionar tipos —si pones el nombre de otro tipo existente, se juntan— y el tipo que se pone por defecto a los GPX que no lo traen) y pestaña <em>Mapa</em> (mapa de fondo al abrir —uno fijo o el último usado—, capa de densidad encendida o apagada al abrir, y si el mapa se centra al pinchar una ruta).</li>
-        <li><strong>Añadir rutas</strong> desde Datos → Añadir GPX, seleccionando varios archivos a la vez; se guardan en este navegador. Si el GPX no trae el tipo, te lo pregunta; ese tipo asignado a varios archivos de golpe solo se guarda en la aplicación. Si luego cambias el tipo, renombras o borras una ruta concreta desde su popup, con Chrome o Edge ese cambio sí se graba también en su archivo GPX (pidiéndote confirmar el permiso una vez, por ser un solo archivo).</li>
+        <li><strong>Menú superior:</strong> <em>Datos</em> (añadir rutas, exportar CSV, copia de seguridad, analizar terreno, vaciar todo), <em>Filtros</em> (mostrar/ocultar panel, restablecer), <em>Paneles</em> (gráficos, récords, calendario, tabla, resumen anual) e <em>Info</em> (esta ayuda y Quiénes somos). El botón ⚙ abre la <em>Configuración</em>: pestaña <em>Apariencia</em> (idioma, tema claro u oscuro, formato de fecha, e intensidad y grosor de las rutas), pestaña <em>Tipos de actividad</em> (color de cada tipo, renombrar o fusionar tipos —si pones el nombre de otro tipo existente, se juntan— y el tipo que se pone por defecto a los GPX que no lo traen) y pestaña <em>Mapa</em> (mapa de fondo al abrir —uno fijo o el último usado—, capa de densidad encendida o apagada al abrir, y si el mapa se centra al pinchar una ruta).</li>
+        <li><strong>Añadir rutas</strong> desde Datos → Añadir rutas, seleccionando varios archivos a la vez; se guardan en este navegador. Admite <strong>GPX</strong> y <strong>TCX</strong> (Garmin), también comprimidos en <strong>.gz</strong> (como vienen en la exportación de Strava). Si el archivo no trae el tipo, te lo pregunta (o pone el tipo por defecto de ⚙); ese tipo asignado a varios archivos de golpe solo se guarda en la aplicación. Si luego cambias el tipo o renombras una ruta concreta desde su ventana, con Chrome o Edge ese cambio se graba también en su archivo, pero solo si es un GPX sin comprimir; en TCX y .gz se guarda solo en la aplicación. Los archivos FIT todavía no se admiten.</li>
         <li><strong>Filtros</strong> (panel izquierdo): nombre, año, tipo (con su color; se cambia en ⚙ → Tipos de actividad), distancia, desnivel e índice de dificultad. Se combinan entre sí y afectan al mapa y a los totales de la cabecera. Al añadir rutas nuevas, los máximos de distancia, desnivel e índice se amplían solos, salvo que los hayas cambiado a mano.</li>
         <li><strong>Una ruta en el mapa:</strong> al pincharla se resalta y se abre abajo su ventana: nombre, fecha y tipo; sus cifras (km, desnivel, tiempo, velocidad, índice e IDR); el terreno; los botones para cambiar el tipo (se guarda al elegirlo), renombrar (✎), analizar el terreno (↻), borrar (🗑) y cerrar (✕); y su perfil de elevación. Arrastra sobre el perfil para ampliar un tramo y ver su pendiente coloreada por sectores; pasa el ratón para ver km, altitud, pendiente y tipo de terreno de cada punto. Si la ruta tiene el terreno analizado, una franja de colores bajo el perfil marca los tramos de asfalto, pista y senda.</li>
         <li><strong>Mapa y capas:</strong> el icono de capas (arriba a la derecha) cambia el fondo del mapa y activa o desactiva las rutas y la capa de densidad (heatmap).</li>
@@ -2553,8 +2597,8 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
     `,
     en: `
       <ul style="margin:0 0 10px; padding-left:18px;">
-        <li><strong>Top menu:</strong> <em>Data</em> (add GPX, export CSV, backup, analyze terrain, clear all), <em>Filters</em> (show/hide panel, reset), <em>Panels</em> (charts, records, calendar, table, year in review) and <em>Info</em> (this help and About). The ⚙ button opens <em>Settings</em>: the <em>Appearance</em> tab (language, light or dark theme, date format, and route intensity and thickness), the <em>Activity types</em> tab (each type's color, renaming or merging types —give one the name of another existing type and they are combined— and the default type for GPX files that don't include one) and the <em>Map</em> tab (background map on open —a fixed one or the last used—, density layer on or off at start, and whether the map centers when you click a route).</li>
-        <li><strong>Add routes</strong> from Data → Add GPX, picking several files at once; they're saved in this browser. If a GPX has no type, you'll be asked; a type assigned to many files at once is only saved in the app. If you later change the type, rename, or delete one specific route from its popup, with Chrome or Edge that change is also written to its GPX file (asking you to confirm the permission once, since it's a single file).</li>
+        <li><strong>Top menu:</strong> <em>Data</em> (add routes, export CSV, backup, analyze terrain, clear all), <em>Filters</em> (show/hide panel, reset), <em>Panels</em> (charts, records, calendar, table, year in review) and <em>Info</em> (this help and About). The ⚙ button opens <em>Settings</em>: the <em>Appearance</em> tab (language, light or dark theme, date format, and route intensity and thickness), the <em>Activity types</em> tab (each type's color, renaming or merging types —give one the name of another existing type and they are combined— and the default type for GPX files that don't include one) and the <em>Map</em> tab (background map on open —a fixed one or the last used—, density layer on or off at start, and whether the map centers when you click a route).</li>
+        <li><strong>Add routes</strong> from Data → Add routes, picking several files at once; they're saved in this browser. <strong>GPX</strong> and <strong>TCX</strong> (Garmin) files are supported, also gzipped as <strong>.gz</strong> (as in Strava's export). If a file has no type, you'll be asked (or the default type from ⚙ is used); a type assigned to many files at once is only saved in the app. If you later change the type or rename one specific route from its panel, with Chrome or Edge that change is also written to its file, but only for uncompressed GPX; for TCX and .gz it's saved in the app only. FIT files aren't supported yet.</li>
         <li><strong>Filters</strong> (left panel): name, year, type (with its color, which you change in ⚙ → Activity types), distance, elevation gain and difficulty index. They all combine and affect the map and the header totals. When you add new routes, the distance, gain and index maximums widen automatically unless you changed them by hand.</li>
         <li><strong>A route on the map:</strong> clicking it highlights it and opens its panel at the bottom: name, date and type; its figures (km, gain, time, speed, index and RDI); the terrain; buttons to change the type (saved when chosen), rename (✎), analyze terrain (↻), delete (🗑) and close (✕); and its elevation profile. Drag over the profile to zoom into a section and see its gradient colored by sector; hover to see the km, altitude, gradient and terrain type at any point. If the route's terrain has been analyzed, a colored strip under the profile marks the paved, track and trail sections.</li>
         <li><strong>Map and layers:</strong> the layers icon (top right) changes the map background and toggles the routes and density (heatmap) layers.</li>
@@ -2579,7 +2623,7 @@ td.num input[type=checkbox], th input[type=checkbox]{ margin:0; }
   // ---------- Quiénes somos / About ----------
   // Versión de la app: se sube (0.4 → 0.5 → …) y se pone la fecha del día cada vez que se genera un HTML nuevo.
   // Versiones 0.x mientras la app no se publique.
-  const APP_VERSION = "0.9", APP_VERSION_DATE = "2026-10-09";
+  const APP_VERSION = "0.10", APP_VERSION_DATE = "2026-10-09";
   const APP_AUTHOR = "Angel Herrero", APP_EMAIL = "angelherreropla@gmail.com";
   const ABOUT_HTML = {
     es: () => `
